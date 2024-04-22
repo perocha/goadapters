@@ -10,7 +10,6 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/perocha/goutils v1.0.4
-	github.com/perocha/order-processing v0.0.0-20240421211033-9f0297b8a13e
 )
 
 require (

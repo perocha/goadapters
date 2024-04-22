@@ -7,13 +7,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azeventhubs"
-
+	"github.com/google/uuid"
+	"github.com/perocha/goadapters/messaging"
 	"github.com/perocha/goutils/pkg/telemetry"
-	"github.com/perocha/order-processing/pkg/domain/event"
-	"github.com/perocha/order-processing/pkg/infrastructure/adapter/messaging"
 )
 
 func (a *EventHubAdapterImpl) Subscribe(ctx context.Context) (<-chan messaging.Message, context.CancelFunc, error) {
@@ -99,9 +96,12 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 			log.Printf("EventHubAdapter::processEventsForPartition::OperationID=%s::Message received=%s\n", operationID, string(eventItem.Body))
 
 			// Events received!! Process the message
-			msg := event.Event{}
+			// msg := event.Event{}
+			//			err := json.Unmarshal(eventItem.Body, &msg)
+
 			// Unmarshal the event body into the message struct
-			err := json.Unmarshal(eventItem.Body, &msg)
+			var receivedMessage map[string]interface{}
+			err := json.Unmarshal(eventItem.Body, &receivedMessage)
 			if err != nil {
 				// Error unmarshalling the event body, send an error event to the event channel
 				telemetryClient.TrackTrace(ctx, "EventHubAdapter::processEventsForPartition::Error unmarshalling event body", telemetry.Error, nil, true)
@@ -114,7 +114,7 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 				// Send the message to the event channel
 				eventChannel <- messaging.Message{
 					OperationID: operationID,
-					Event:       msg,
+					Data:        receivedMessage,
 					Error:       nil}
 			}
 
