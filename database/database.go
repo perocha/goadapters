@@ -11,8 +11,8 @@ type Database interface {
 
 // DBRepository represents the interface for interacting with document in the database.
 type DBRepository interface {
-	CreateDocument(ctx context.Context, document interface{}) error
-	UpdateDocument(ctx context.Context, id string, document interface{}) error
-	DeleteDocument(ctx context.Context, id string, partitionKey string) error
-	GetDocument(ctx context.Context, id string, partitionKey string) (interface{}, error)
+	CreateDocument(ctx context.Context, partitionKey string, document interface{}) error
+	UpdateDocument(ctx context.Context, id string, partitionKey string, document interface{}) error
+	DeleteDocument(ctx context.Context, partitionKey string, id string) error
+	GetDocument(ctx context.Context, partitionKey string, id string) (interface{}, error)
 }

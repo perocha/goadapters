@@ -61,7 +61,7 @@ func NewCosmosdbRepository(ctx context.Context, endPoint, connectionString, data
 }
 
 // Creates a new document in CosmosDB
-func (r *CosmosdbRepository) CreateDocument(ctx context.Context, document interface{}, partitionKey string) error {
+func (r *CosmosdbRepository) CreateDocument(ctx context.Context, partitionKey string, document interface{}) error {
 	startTime := time.Now()
 	telemetryClient := telemetry.GetTelemetryClient(ctx)
 
@@ -111,7 +111,7 @@ func (r *CosmosdbRepository) UpdateDocument(ctx context.Context, id string, part
 }
 
 // Deletes an document from CosmosDB
-func (r *CosmosdbRepository) DeleteDocument(ctx context.Context, id, partitionKey string) error {
+func (r *CosmosdbRepository) DeleteDocument(ctx context.Context, partitionKey string, id string) error {
 	startTime := time.Now()
 	telemetryClient := telemetry.GetTelemetryClient(ctx)
 
@@ -134,7 +134,7 @@ func (r *CosmosdbRepository) DeleteDocument(ctx context.Context, id, partitionKe
 }
 
 // Retrieves an document from CosmosDB
-func (r *CosmosdbRepository) GetDocument(ctx context.Context, id, partitionKey string) (interface{}, error) {
+func (r *CosmosdbRepository) GetDocument(ctx context.Context, partitionKey string, id string) (interface{}, error) {
 	startTime := time.Now()
 	telemetryClient := telemetry.GetTelemetryClient(ctx)
 
