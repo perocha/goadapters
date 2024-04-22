@@ -3,10 +3,12 @@ package cosmosdb
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
+	"github.com/mitchellh/mapstructure"
 	"github.com/perocha/goutils/pkg/telemetry"
 )
 
@@ -65,6 +67,12 @@ func (r *CosmosdbRepository) CreateDocument(ctx context.Context, partitionKey st
 	startTime := time.Now()
 	telemetryClient := telemetry.GetTelemetryClient(ctx)
 
+	// Convert document to map[string]interface{}
+	documentMap := make(map[string]interface{})
+	if err := mapstructure.Decode(document, &documentMap); err != nil {
+		return err
+	}
+
 	// Convert document to json
 	docJson, err := json.Marshal(document)
 	if err != nil {
@@ -80,7 +88,13 @@ func (r *CosmosdbRepository) CreateDocument(ctx context.Context, partitionKey st
 		return err
 	}
 
-	telemetryClient.TrackDependency(ctx, "CosmosdbRepository", "CreateDocument", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), nil, true)
+	// Construct telemetry properties from document content
+	telemetryProps := make(map[string]string)
+	for key, value := range documentMap {
+		telemetryProps[key] = fmt.Sprintf("%v", value)
+	}
+
+	telemetryClient.TrackDependency(ctx, "CosmosdbRepository", "CreateDocument", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), telemetryProps, true)
 
 	return nil
 }
