@@ -86,7 +86,7 @@ func (r *CosmosdbRepository) CreateDocument(ctx context.Context, partitionKey st
 }
 
 // Updates an existing document in CosmosDB
-func (r *CosmosdbRepository) UpdateDocument(ctx context.Context, id string, partitionKey string, document interface{}) error {
+func (r *CosmosdbRepository) UpdateDocument(ctx context.Context, partitionKey string, id string, document interface{}) error {
 	startTime := time.Now()
 	telemetryClient := telemetry.GetTelemetryClient(ctx)
 
