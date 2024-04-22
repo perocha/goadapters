@@ -2,15 +2,13 @@ package messaging
 
 import (
 	"context"
-
-	"github.com/perocha/order-processing/pkg/domain/event"
 )
 
 // EventWithOperationID struct that contains an operation ID and an Event
 type Message struct {
 	OperationID string
 	Error       error
-	Event       event.Event
+	Data        interface{}
 }
 
 type MessagingSystem interface {

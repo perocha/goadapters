@@ -2,18 +2,17 @@ package database
 
 import (
 	"context"
-
-	"github.com/perocha/order-processing/pkg/domain/order"
 )
 
 // Database represents the interface for interacting with the database.
 type Database interface {
-	OrderRepository() OrderRepository
+	Repository() DBRepository
 }
 
-// OrderRepository represents the interface for interacting with order data in the database.
-type OrderRepository interface {
-	CreateOrder(ctx context.Context, order order.Order) error
-	UpdateOrder(ctx context.Context, order order.Order) error
-	DeleteOrder(ctx context.Context, id string, partitionKey string) error
+// DBRepository represents the interface for interacting with document in the database.
+type DBRepository interface {
+	CreateDocument(ctx context.Context, document interface{}) error
+	UpdateDocument(ctx context.Context, id string, document interface{}) error
+	DeleteDocument(ctx context.Context, id string, partitionKey string) error
+	GetDocument(ctx context.Context, id string, partitionKey string) (interface{}, error)
 }

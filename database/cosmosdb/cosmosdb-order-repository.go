@@ -8,24 +8,23 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
 	"github.com/perocha/goutils/pkg/telemetry"
-	"github.com/perocha/order-processing/pkg/domain/order"
 )
 
-// CosmosDB order repository
-type CosmosDBOrderRepository struct {
+// CosmosDB repository
+type CosmosdbRepository struct {
 	client    ClientInterface
 	database  DatabaseClientInterface
 	container ContainerClientInterface
 }
 
 // Initialize CosmosDB repository using the provided connection string
-func NewCosmosDBOrderRepository(ctx context.Context, endPoint, connectionString, databaseName, containerName string) (*CosmosDBOrderRepository, error) {
+func NewCosmosdbRepository(ctx context.Context, endPoint, connectionString, databaseName, containerName string) (*CosmosdbRepository, error) {
 	telemetryClient := telemetry.GetTelemetryClient(ctx)
 
 	// Create a new default azure credential
 	credential, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
-		telemetryClient.TrackException(ctx, "CosmosDBOrderRepository::NewCosmosDBOrderRepository::Error creating default azure credential", err, telemetry.Critical, nil, true)
+		telemetryClient.TrackException(ctx, "CosmosdbRepository::NewCosmosdbRepository::Error creating default azure credential", err, telemetry.Critical, nil, true)
 		return nil, err
 	}
 
@@ -35,7 +34,7 @@ func NewCosmosDBOrderRepository(ctx context.Context, endPoint, connectionString,
 	}
 	client, err := azcosmos.NewClient(endPoint, credential, &clientOptions)
 	if err != nil {
-		telemetryClient.TrackException(ctx, "CosmosDBOrderRepository::NewCosmosDBOrderRepository::Error creating client", err, telemetry.Critical, nil, true)
+		telemetryClient.TrackException(ctx, "CosmosdbRepository::NewCosmosdbRepository::Error creating client", err, telemetry.Critical, nil, true)
 		return nil, err
 	}
 	cosmosClient := &CosmosClient{client: client}
@@ -54,65 +53,65 @@ func NewCosmosDBOrderRepository(ctx context.Context, endPoint, connectionString,
 	}
 	containerClient := &CosmosContainer{container: container}
 
-	return &CosmosDBOrderRepository{
+	return &CosmosdbRepository{
 		client:    cosmosClient,
 		database:  databaseClient,
 		container: containerClient,
 	}, nil
 }
 
-// Creates a new order in CosmosDB
-func (r *CosmosDBOrderRepository) CreateOrder(ctx context.Context, order order.Order) error {
+// Creates a new document in CosmosDB
+func (r *CosmosdbRepository) CreateDocument(ctx context.Context, document interface{}, partitionKey string) error {
 	startTime := time.Now()
 	telemetryClient := telemetry.GetTelemetryClient(ctx)
 
-	// Convert order to json
-	orderJson, err := json.Marshal(order)
+	// Convert document to json
+	docJson, err := json.Marshal(document)
 	if err != nil {
 		return err
 	}
 
 	// Create partition key
-	pk := azcosmos.NewPartitionKeyString(order.ProductCategory)
+	pk := azcosmos.NewPartitionKeyString(partitionKey)
 
 	// Create an item
-	_, err = r.container.CreateItem(ctx, pk, orderJson, nil)
+	_, err = r.container.CreateItem(ctx, pk, docJson, nil)
 	if err != nil {
 		return err
 	}
 
-	telemetryClient.TrackDependency(ctx, "CosmosDBOrderRepository", "CreateOrder", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), order.ToMap(), true)
+	telemetryClient.TrackDependency(ctx, "CosmosdbRepository", "CreateDocument", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), nil, true)
 
 	return nil
 }
 
-// Updates an existing order in CosmosDB
-func (r *CosmosDBOrderRepository) UpdateOrder(ctx context.Context, order order.Order) error {
+// Updates an existing document in CosmosDB
+func (r *CosmosdbRepository) UpdateDocument(ctx context.Context, id string, partitionKey string, document interface{}) error {
 	startTime := time.Now()
 	telemetryClient := telemetry.GetTelemetryClient(ctx)
 
 	// Create partition key
-	pk := azcosmos.NewPartitionKeyString(order.ProductCategory)
+	pk := azcosmos.NewPartitionKeyString(partitionKey)
 
-	// Convert order to json
-	orderJson, err := json.Marshal(order)
+	// Convert document to json
+	docJson, err := json.Marshal(document)
 	if err != nil {
 		return err
 	}
 
 	// Update an item
-	_, err = r.container.UpsertItem(ctx, pk, orderJson, nil)
+	_, err = r.container.UpsertItem(ctx, pk, docJson, nil)
 	if err != nil {
 		return err
 	}
 
-	telemetryClient.TrackDependency(ctx, "CosmosDBOrderRepository", "UpdateOrder", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), order.ToMap(), true)
+	telemetryClient.TrackDependency(ctx, "CosmosdbRepository", "UpdateDocument", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), nil, true)
 
 	return nil
 }
 
-// Deletes an order from CosmosDB
-func (r *CosmosDBOrderRepository) DeleteOrder(ctx context.Context, id, partitionKey string) error {
+// Deletes an document from CosmosDB
+func (r *CosmosdbRepository) DeleteDocument(ctx context.Context, id, partitionKey string) error {
 	startTime := time.Now()
 	telemetryClient := telemetry.GetTelemetryClient(ctx)
 
@@ -126,15 +125,16 @@ func (r *CosmosDBOrderRepository) DeleteOrder(ctx context.Context, id, partition
 	}
 
 	properties := map[string]string{
-		"OrderId": id,
+		"Id":           id,
+		"PartitionKey": partitionKey,
 	}
-	telemetryClient.TrackDependency(ctx, "CosmosDBOrderRepository", "DeleteOrder", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), properties, true)
+	telemetryClient.TrackDependency(ctx, "CosmosdbRepository", "DeleteDocument", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), properties, true)
 
 	return nil
 }
 
-// Retrieves an order from CosmosDB
-func (r *CosmosDBOrderRepository) GetOrder(ctx context.Context, id, partitionKey string) (*order.Order, error) {
+// Retrieves an document from CosmosDB
+func (r *CosmosdbRepository) GetDocument(ctx context.Context, id, partitionKey string) (interface{}, error) {
 	startTime := time.Now()
 	telemetryClient := telemetry.GetTelemetryClient(ctx)
 
@@ -147,14 +147,14 @@ func (r *CosmosDBOrderRepository) GetOrder(ctx context.Context, id, partitionKey
 		return nil, err
 	}
 
-	// Convert item to order
-	var order order.Order
-	err = json.Unmarshal(item.Value, &order)
+	// Convert item to document
+	var readDoc map[string]interface{}
+	err = json.Unmarshal(item.Value, &readDoc)
 	if err != nil {
 		return nil, err
 	}
 
-	telemetryClient.TrackDependency(ctx, "CosmosDBOrderRepository", "DeleteOrder", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), order.ToMap(), true)
+	telemetryClient.TrackDependency(ctx, "CosmosdbRepository", "GetDocument", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), nil, true)
 
-	return &order, nil
+	return readDoc, nil
 }
