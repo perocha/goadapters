@@ -9,13 +9,13 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azeventhubs"
 	"github.com/google/uuid"
-	"github.com/perocha/goadapters/messaging"
+	"github.com/perocha/goadapters/messaging/message"
 	"github.com/perocha/goutils/pkg/telemetry"
 )
 
-func (a *EventHubAdapterImpl) Subscribe(ctx context.Context) (<-chan messaging.Message, context.CancelFunc, error) {
+func (a *EventHubAdapterImpl) Subscribe(ctx context.Context) (<-chan message.Message, context.CancelFunc, error) {
 	telemetryClient := telemetry.GetTelemetryClient(ctx)
-	eventChannel := make(chan messaging.Message)
+	eventChannel := make(chan message.Message)
 
 	// Run all partition clients
 	go a.dispatchPartitionClients(ctx, eventChannel)
@@ -33,7 +33,7 @@ func (a *EventHubAdapterImpl) Subscribe(ctx context.Context) (<-chan messaging.M
 	return eventChannel, processorCancel, nil
 }
 
-func (a *EventHubAdapterImpl) dispatchPartitionClients(ctx context.Context, eventChannel chan messaging.Message) {
+func (a *EventHubAdapterImpl) dispatchPartitionClients(ctx context.Context, eventChannel chan message.Message) {
 	for {
 		telemetryClient := telemetry.GetTelemetryClient(ctx)
 
@@ -62,7 +62,7 @@ func (a *EventHubAdapterImpl) dispatchPartitionClients(ctx context.Context, even
 }
 
 // ProcessEvents implements the logic that is executed when events are received from the event hub
-func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, partitionClient *azeventhubs.ProcessorPartitionClient, eventChannel chan messaging.Message) error {
+func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, partitionClient *azeventhubs.ProcessorPartitionClient, eventChannel chan message.Message) error {
 	telemetryClient := telemetry.GetTelemetryClient(ctx)
 
 	// Defer the shutdown of the partition resources
@@ -105,17 +105,13 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 			if err != nil {
 				// Error unmarshalling the event body, send an error event to the event channel
 				telemetryClient.TrackTrace(ctx, "EventHubAdapter::processEventsForPartition::Error unmarshalling event body", telemetry.Error, nil, true)
-				eventChannel <- messaging.Message{
-					OperationID: operationID,
-					Error:       err,
-				}
+				errorMessage := message.NewMessage(operationID, err, "", nil)
+				eventChannel <- errorMessage
 			} else {
 				telemetryClient.TrackTrace(ctx, "EventHubAdapter::processEventsForPartition::PROCESS MESSAGE", telemetry.Information, nil, true)
 				// Send the message to the event channel
-				eventChannel <- messaging.Message{
-					OperationID: operationID,
-					Data:        receivedMessage,
-					Error:       nil}
+				newMessage := message.NewMessage(operationID, nil, "Success", receivedMessage)
+				eventChannel <- newMessage
 			}
 
 			telemetryClient.TrackDependency(ctx, "EventHubAdapter::processEventsForPartition::Process message", "name", "EventHub", a.eventHubName, true, startTime, time.Now(), nil, true)
