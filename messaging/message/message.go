@@ -72,17 +72,12 @@ func (m *MessageImpl) DeserializeData(data []byte) error {
 
 // NewMessage creates a new message with serialized data
 func NewMessage(operationID string, error error, status string, command string, data interface{}) (Message, error) {
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return nil, err
-	}
-
 	msg := &MessageImpl{
 		OperationID: operationID,
 		Error:       error,
 		Status:      status,
 		Command:     command,
-		Data:        jsonData,
+		Data:        data,
 	}
 
 	return msg, nil
