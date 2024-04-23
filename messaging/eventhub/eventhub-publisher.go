@@ -8,11 +8,12 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azeventhubs"
+	"github.com/perocha/goadapters/messaging/message"
 	"github.com/perocha/goutils/pkg/telemetry"
 )
 
 // Publish an event to the EventHub
-func (p *EventHubAdapterImpl) Publish(ctx context.Context, data interface{}) error {
+func (p *EventHubAdapterImpl) Publish(ctx context.Context, data message.Message) error {
 	telemetryClient := telemetry.GetTelemetryClient(ctx)
 	startTime := time.Now()
 
