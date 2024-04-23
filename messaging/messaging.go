@@ -19,7 +19,13 @@ func (m *Message) ToMap() (map[string]interface{}, error) {
 		return nil, errors.New("message::ToMap::Data is nil")
 	}
 
-	// Convert the Data field to a map[string]interface{}
+	// Try to assert the Data field to a map[string]interface{}
+	dataMap, ok := m.Data.(map[string]interface{})
+	if ok {
+		return dataMap, nil
+	}
+
+	// If the above assertion failed, try to assert the Data field to []byte
 	dataBytes, ok := m.Data.([]byte)
 	if !ok {
 		return nil, errors.New("message::ToMap::Error Data is not a valid JSON")
