@@ -2,12 +2,11 @@ package eventhub
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"log"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azeventhubs"
-	"github.com/google/uuid"
 	"github.com/perocha/goadapters/messaging/message"
 	"github.com/perocha/goutils/pkg/telemetry"
 )
@@ -90,17 +89,23 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 		for _, eventItem := range events {
 			// Track the current time to log the telemetry and create a new operation uuid (add to the context)
 			startTime := time.Now()
-			operationID := uuid.New().String()
-			ctx := context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, operationID)
-			log.Printf("EventHubAdapter::processEventsForPartition::OperationID=%s::Message received=%s\n", operationID, string(eventItem.Body))
 
-			// Create a new message
-			receivedMessage, err := message.NewMessage(operationID, nil, "", "", eventItem.Body)
+			// Assume eventItem.Body is type message.Message, but first unmarshal
+			var receivedMessage message.Message
+			err := json.Unmarshal(eventItem.Body, &receivedMessage)
 
+			/*
+				operationID := uuid.New().String()
+				ctx := context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, operationID)
+				log.Printf("EventHubAdapter::processEventsForPartition::OperationID=%s::Message received=%s\n", operationID, string(eventItem.Body))
+
+				// Create a new message
+				receivedMessage, err := message.NewMessage(operationID, nil, "", "", eventItem.Body)
+			*/
 			if err != nil {
 				// Error unmarshalling the event body, send an error event to the event channel
 				telemetryClient.TrackTrace(ctx, "EventHubAdapter::processEventsForPartition::Error unmarshalling event body", telemetry.Error, nil, true)
-				errorMessage, _ := message.NewMessage(operationID, err, "", "", nil)
+				errorMessage, _ := message.NewMessage("", err, "", "", nil)
 				eventChannel <- errorMessage
 			} else {
 				// Send the message to the event channel
