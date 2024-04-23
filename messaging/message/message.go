@@ -1,5 +1,14 @@
 package message
 
+import "context"
+
+// Interface for messaging systems
+type MessagingSystem interface {
+	Publish(ctx context.Context, data interface{}) error
+	Subscribe(ctx context.Context) (<-chan Message, context.CancelFunc, error)
+	Close(ctx context.Context) error
+}
+
 type Message interface {
 	GetOperationID() string
 	GetError() error
