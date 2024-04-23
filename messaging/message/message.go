@@ -29,7 +29,7 @@ type MessageImpl struct {
 	Error       error       `json:"error"`
 	Status      string      `json:"status"`
 	Command     string      `json:"command"`
-	Data        interface{} `json:"-"`
+	Data        interface{} `json:"data"`
 }
 
 // GetOperationID returns the operation ID
