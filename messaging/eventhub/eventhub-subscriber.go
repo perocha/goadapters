@@ -95,15 +95,18 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 			ctx := context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, operationID)
 			log.Printf("EventHubAdapter::processEventsForPartition::OperationID=%s::Message received=%s\n", operationID, string(eventItem.Body))
 
-			// Unmarshal the event body into the message struct
-			var receivedMessage message.Message
-			err := json.Unmarshal(eventItem.Body, &receivedMessage)
+			// Unmarshal the event body into a map
+			var receivedMessageMap map[string]interface{}
+			err := json.Unmarshal(eventItem.Body, &receivedMessageMap)
 			if err != nil {
 				// Error unmarshalling the event body, send an error event to the event channel
 				telemetryClient.TrackTrace(ctx, "EventHubAdapter::processEventsForPartition::Error unmarshalling event body", telemetry.Error, nil, true)
 				errorMessage := message.NewMessage(operationID, err, "", "", nil)
 				eventChannel <- errorMessage
 			} else {
+				// Create a new message instance and assign the values from the map
+				receivedMessage := message.NewMessage(operationID, nil, "", "", receivedMessageMap)
+
 				// Send the message to the event channel
 				telemetryClient.TrackTrace(ctx, "EventHubAdapter::processEventsForPartition::PROCESS MESSAGE", telemetry.Information, nil, true)
 				eventChannel <- receivedMessage
