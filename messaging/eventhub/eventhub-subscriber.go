@@ -105,12 +105,12 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 			if err != nil {
 				// Error unmarshalling the event body, send an error event to the event channel
 				telemetryClient.TrackTrace(ctx, "EventHubAdapter::processEventsForPartition::Error unmarshalling event body", telemetry.Error, nil, true)
-				errorMessage := message.NewMessage(operationID, err, "", nil)
+				errorMessage := message.NewMessage(operationID, err, "", "", nil)
 				eventChannel <- errorMessage
 			} else {
 				telemetryClient.TrackTrace(ctx, "EventHubAdapter::processEventsForPartition::PROCESS MESSAGE", telemetry.Information, nil, true)
 				// Send the message to the event channel
-				newMessage := message.NewMessage(operationID, nil, "Success", receivedMessage)
+				newMessage := message.NewMessage(operationID, nil, "Success", "", receivedMessage)
 				eventChannel <- newMessage
 			}
 

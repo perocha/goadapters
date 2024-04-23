@@ -52,11 +52,12 @@ func (m *MessageImpl) GetData() interface{} {
 }
 
 // NewMessage creates a new message
-func NewMessage(operationID string, error error, status string, data interface{}) Message {
+func NewMessage(operationID string, error error, status string, command string, data interface{}) Message {
 	return &MessageImpl{
 		OperationID: operationID,
 		Error:       error,
 		Status:      status,
+		Command:     command,
 		Data:        data,
 	}
 }
