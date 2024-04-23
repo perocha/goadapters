@@ -13,6 +13,7 @@ type Message interface {
 	GetOperationID() string
 	GetError() error
 	GetStatus() string
+	GetCommand() string
 	GetData() interface{}
 }
 
@@ -21,6 +22,7 @@ type MessageImpl struct {
 	OperationID string      `json:"operation_id"`
 	Error       error       `json:"error"`
 	Status      string      `json:"status"`
+	Command     string      `json:"command"`
 	Data        interface{} `json:"data"`
 }
 
@@ -37,6 +39,11 @@ func (m *MessageImpl) GetError() error {
 // GetStatus returns the status
 func (m *MessageImpl) GetStatus() string {
 	return m.Status
+}
+
+// GetCommand returns the command
+func (m *MessageImpl) GetCommand() string {
+	return m.Command
 }
 
 // GetData returns the data
