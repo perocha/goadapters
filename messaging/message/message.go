@@ -70,18 +70,19 @@ func (m *MessageImpl) DeserializeData(data []byte) error {
 	return json.Unmarshal(data, &m.Data)
 }
 
-// NewMessageWithData creates a new message with serialized data
-func NewMessage(operationID string, error error, status string, command string, data []byte) (Message, error) {
+// NewMessage creates a new message with serialized data
+func NewMessage(operationID string, error error, status string, command string, data interface{}) (Message, error) {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+
 	msg := &MessageImpl{
 		OperationID: operationID,
 		Error:       error,
 		Status:      status,
 		Command:     command,
-	}
-
-	err := msg.DeserializeData(data)
-	if err != nil {
-		return nil, err
+		Data:        jsonData,
 	}
 
 	return msg, nil
