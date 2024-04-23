@@ -95,12 +95,8 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 			ctx := context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, operationID)
 			log.Printf("EventHubAdapter::processEventsForPartition::OperationID=%s::Message received=%s\n", operationID, string(eventItem.Body))
 
-			// Events received!! Process the message
-			// msg := event.Event{}
-			//			err := json.Unmarshal(eventItem.Body, &msg)
-
 			// Unmarshal the event body into the message struct
-			var receivedMessage map[string]interface{}
+			var receivedMessage message.Message
 			err := json.Unmarshal(eventItem.Body, &receivedMessage)
 			if err != nil {
 				// Error unmarshalling the event body, send an error event to the event channel
@@ -108,15 +104,12 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 				errorMessage := message.NewMessage(operationID, err, "", "", nil)
 				eventChannel <- errorMessage
 			} else {
-				telemetryClient.TrackTrace(ctx, "EventHubAdapter::processEventsForPartition::PROCESS MESSAGE", telemetry.Information, nil, true)
 				// Send the message to the event channel
-				newMessage := message.NewMessage(operationID, nil, "Success", "", receivedMessage)
-				eventChannel <- newMessage
+				telemetryClient.TrackTrace(ctx, "EventHubAdapter::processEventsForPartition::PROCESS MESSAGE", telemetry.Information, nil, true)
+				eventChannel <- receivedMessage
 			}
 
-			telemetryClient.TrackDependency(ctx, "EventHubAdapter::processEventsForPartition::Process message", "name", "EventHub", a.eventHubName, true, startTime, time.Now(), nil, true)
-			log.Printf("EventHubAdapter::processEventsForPartition::PartitionID::%s::Events received %v\n", partitionClient.PartitionID(), string(eventItem.Body))
-			// log.Printf("EventHubAdapter::processEventsForPartition::Offset: %d Sequence number: %d MessageID: %s\n", eventItem.Offset, eventItem.SequenceNumber, *eventItem.MessageID)
+			telemetryClient.TrackDependency(ctx, "EventHubAdapter::processEventsForPartition", "Process message", "EventHub", a.eventHubName, true, startTime, time.Now(), nil, true)
 		}
 
 		if len(events) != 0 {
