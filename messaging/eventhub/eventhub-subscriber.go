@@ -2,7 +2,6 @@ package eventhub
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -90,9 +89,10 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 			// Track the current time to log the telemetry and create a new operation uuid (add to the context)
 			startTime := time.Now()
 
-			// Assume eventItem.Body is type message.Message, but first unmarshal
-			var receivedMessage message.Message
-			err := json.Unmarshal(eventItem.Body, &receivedMessage)
+			// eventItem.Body is a byte slice and needs to be unmarshalled into a message
+			receivedMessage := message.NewMessage("", nil, "", "", nil)
+			err := receivedMessage.Deserialize(eventItem.Body)
+			//err := json.Unmarshal(eventItem.Body, &receivedMessage)
 
 			/*
 				operationID := uuid.New().String()
@@ -104,8 +104,8 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 			*/
 			if err != nil {
 				// Error unmarshalling the event body, send an error event to the event channel
-				telemetryClient.TrackTrace(ctx, "EventHubAdapter::processEventsForPartition::Error unmarshalling event body", telemetry.Error, nil, true)
-				errorMessage, _ := message.NewMessage("", err, "", "", nil)
+				telemetryClient.TrackException(ctx, "EventHubAdapter::processEventsForPartition::Error unmarshalling event body", err, telemetry.Error, nil, true)
+				errorMessage := message.NewMessage("", err, "", "", nil)
 				eventChannel <- errorMessage
 			} else {
 				// Send the message to the event channel

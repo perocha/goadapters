@@ -19,8 +19,7 @@ type Message interface {
 	GetStatus() string
 	GetCommand() string
 	GetData() interface{}
-	SerializeData() ([]byte, error)
-	DeserializeData(data []byte) error
+	Deserialize(message []byte) error
 }
 
 // MessageImpl implements the Message interface
@@ -57,21 +56,19 @@ func (m *MessageImpl) GetData() interface{} {
 	return m.Data
 }
 
-// SerializeData serializes the Data field to a byte slice
-func (m *MessageImpl) SerializeData() ([]byte, error) {
-	return json.Marshal(m.Data)
-}
-
-// DeserializeData deserializes a byte slice into the Data field
-func (m *MessageImpl) DeserializeData(data []byte) error {
-	if m.Data == nil {
-		return errors.New("data field is nil")
+// Deserializes a byte slice into Message
+func (m *MessageImpl) Deserialize(message []byte) error {
+	if m == nil {
+		err := errors.New("deserialize::message is nil")
+		return err
 	}
-	return json.Unmarshal(data, &m.Data)
+
+	err := json.Unmarshal(message, m)
+	return err
 }
 
-// NewMessage creates a new message with serialized data
-func NewMessage(operationID string, error error, status string, command string, data interface{}) (Message, error) {
+// NewMessage creates a new message
+func NewMessage(operationID string, error error, status string, command string, data interface{}) Message {
 	msg := &MessageImpl{
 		OperationID: operationID,
 		Error:       error,
@@ -80,5 +77,5 @@ func NewMessage(operationID string, error error, status string, command string, 
 		Data:        data,
 	}
 
-	return msg, nil
+	return msg
 }
