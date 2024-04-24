@@ -18,17 +18,18 @@ type Message interface {
 	GetError() error
 	GetStatus() string
 	GetCommand() string
-	GetData() interface{}
+	GetData() []byte
 	Deserialize(message []byte) error
+	Serialize() ([]byte, error)
 }
 
 // MessageImpl implements the Message interface
 type MessageImpl struct {
-	OperationID string      `json:"operation_id"`
-	Error       error       `json:"error"`
-	Status      string      `json:"status"`
-	Command     string      `json:"command"`
-	Data        interface{} `json:"data"`
+	OperationID string `json:"operation_id"`
+	Error       error  `json:"error"`
+	Status      string `json:"status"`
+	Command     string `json:"command"`
+	Data        []byte `json:"data"`
 }
 
 // GetOperationID returns the operation ID
@@ -52,7 +53,7 @@ func (m *MessageImpl) GetCommand() string {
 }
 
 // GetData returns the data
-func (m *MessageImpl) GetData() interface{} {
+func (m *MessageImpl) GetData() []byte {
 	return m.Data
 }
 
@@ -67,8 +68,19 @@ func (m *MessageImpl) Deserialize(message []byte) error {
 	return err
 }
 
+// Serializes a Message into a byte slice
+func (m *MessageImpl) Serialize() ([]byte, error) {
+	if m == nil {
+		err := errors.New("serialize::message is nil")
+		return nil, err
+	}
+
+	data, err := json.Marshal(m)
+	return data, err
+}
+
 // NewMessage creates a new message
-func NewMessage(operationID string, error error, status string, command string, data interface{}) Message {
+func NewMessage(operationID string, error error, status string, command string, data []byte) Message {
 	msg := &MessageImpl{
 		OperationID: operationID,
 		Error:       error,
