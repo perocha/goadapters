@@ -92,24 +92,16 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 			// eventItem.Body is a byte slice and needs to be unmarshalled into a message
 			receivedMessage := message.NewMessage("", nil, "", "", nil)
 			err := receivedMessage.Deserialize(eventItem.Body)
-			//err := json.Unmarshal(eventItem.Body, &receivedMessage)
 
-			/*
-				operationID := uuid.New().String()
-				ctx := context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, operationID)
-				log.Printf("EventHubAdapter::processEventsForPartition::OperationID=%s::Message received=%s\n", operationID, string(eventItem.Body))
-
-				// Create a new message
-				receivedMessage, err := message.NewMessage(operationID, nil, "", "", eventItem.Body)
-			*/
 			if err != nil {
 				// Error unmarshalling the event body, send an error event to the event channel
 				telemetryClient.TrackException(ctx, "EventHubAdapter::processEventsForPartition::Error unmarshalling event body", err, telemetry.Error, nil, true)
 				errorMessage := message.NewMessage("", err, "", "", nil)
 				eventChannel <- errorMessage
 			} else {
-				// Send the message to the event channel
-				telemetryClient.TrackTrace(ctx, "EventHubAdapter::processEventsForPartition::PROCESS MESSAGE", telemetry.Information, nil, true)
+				// If we reach this point, we have a message!! Get the operation ID from the message and add it to the context
+				ctx := context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, receivedMessage.GetOperationID())
+				telemetryClient.TrackTrace(ctx, "EventHubAdapter::processEventsForPartition::Bonzai!!", telemetry.Information, nil, true)
 				eventChannel <- receivedMessage
 			}
 
