@@ -101,11 +101,17 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 			} else {
 				// If we reach this point, we have a message!! Get the operation ID from the message and add it to the context
 				ctx := context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, receivedMessage.GetOperationID())
-				telemetryClient.TrackTrace(ctx, "EventHubAdapter::processEventsForPartition::Bonzai!!", telemetry.Information, nil, true)
+				//telemetryClient.TrackTrace(ctx, "EventHubAdapter::processEventsForPartition::Bonzai!!", telemetry.Information, nil, true)
 				eventChannel <- receivedMessage
+				telemetryProps := map[string]string{
+					"OperationID": receivedMessage.GetOperationID(),
+					"Command":     receivedMessage.GetCommand(),
+					"Status":      receivedMessage.GetStatus(),
+				}
+				telemetryClient.TrackDependency(ctx, "EventHubAdapter::processEventsForPartition", "Process message", "EventHub", a.eventHubName, true, startTime, time.Now(), telemetryProps, true)
 			}
 
-			telemetryClient.TrackDependency(ctx, "EventHubAdapter::processEventsForPartition", "Process message", "EventHub", a.eventHubName, true, startTime, time.Now(), nil, true)
+			//telemetryClient.TrackDependency(ctx, "EventHubAdapter::processEventsForPartition", "Process message", "EventHub", a.eventHubName, true, startTime, time.Now(), nil, true)
 		}
 
 		if len(events) != 0 {
