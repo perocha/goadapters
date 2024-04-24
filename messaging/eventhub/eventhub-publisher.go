@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azeventhubs"
@@ -15,6 +14,9 @@ import (
 // Publish an event to the EventHub
 func (p *EventHubAdapterImpl) Publish(ctx context.Context, data message.Message) error {
 	telemetryClient := telemetry.GetTelemetryClient(ctx)
+
+	// Add the operation ID to the context
+	ctx = context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, data.GetOperationID())
 	startTime := time.Now()
 
 	// Check if EventHub is initialized
@@ -54,12 +56,10 @@ func (p *EventHubAdapterImpl) Publish(ctx context.Context, data message.Message)
 		//
 		// If this is the _only_ message being added to the batch then it's too big in general, and
 		// will need to be split or shrunk to fit.
-		log.Printf("Publish::Message too large to fit into this batch\n")
 		telemetryClient.TrackException(ctx, "Publish::Message too large to fit into this batch", err, telemetry.Critical, nil, true)
 		return err
 	} else if err != nil {
 		// Some other error occurred
-		log.Printf("Publish::Failed to add message to batch: %s\n", err.Error())
 		telemetryClient.TrackException(ctx, "Publish::Failed to add message to batch", err, telemetry.Critical, nil, true)
 		return err
 	}
