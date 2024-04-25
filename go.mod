@@ -8,7 +8,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/messaging/azeventhubs v1.1.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.3.2
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/perocha/goutils v1.0.5
+	github.com/perocha/goutils v1.0.13
 )
 
 require (
@@ -24,6 +24,8 @@ require (
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/microsoft/ApplicationInsights-Go v0.4.4 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
+	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
