@@ -59,6 +59,8 @@ github.com/onsi/ginkgo v1.8.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+W
 github.com/onsi/gomega v1.5.0/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/perocha/goutils v1.0.13 h1:QYGxhf/qwWqkG68nvC7sbwFWaGCeRs3HZVK1qe/2wdQ=
 github.com/perocha/goutils v1.0.13/go.mod h1:50YqBN0KrdPJDIECQrQQyNnqJU6gu2jwTNo8++Mrk8o=
+github.com/perocha/goutils v1.0.21 h1:1bflmkRmxvRd3bclCLTIacCQaDBcnqOLS+6KuuqxKk0=
+github.com/perocha/goutils v1.0.21/go.mod h1:50YqBN0KrdPJDIECQrQQyNnqJU6gu2jwTNo8++Mrk8o=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c h1:+mdjkGKdHQG3305AYmdv1U2eRNDiU2ErMBj1gwrq8eQ=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c/go.mod h1:7rwL4CYBLnjLxUqIJNnCWiEdr3bn6IUYi15bNlnbCCU=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
