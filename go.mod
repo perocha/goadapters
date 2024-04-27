@@ -8,7 +8,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/messaging/azeventhubs v1.1.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.3.2
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/perocha/goutils v1.0.37
+	github.com/perocha/goutils v1.0.40
 )
 
 require (
