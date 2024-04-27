@@ -3,8 +3,6 @@ package cosmosdb
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
@@ -21,12 +19,12 @@ type CosmosdbRepository struct {
 
 // Initialize CosmosDB repository using the provided connection string
 func NewCosmosdbRepository(ctx context.Context, endPoint, connectionString, databaseName, containerName string) (*CosmosdbRepository, error) {
-	telemetryClient := telemetry.GetTelemetryClient(ctx)
+	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 
 	// Create a new default azure credential
 	credential, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
-		telemetryClient.TrackException(ctx, "CosmosdbRepository::NewCosmosdbRepository::Error creating default azure credential", err, telemetry.Critical, nil, true)
+		xTelemetry.Error(ctx, "CosmosdbRepository::NewCosmosdbRepository::Error creating default azure credential", telemetry.String("Error", err.Error()))
 		return nil, err
 	}
 
@@ -36,7 +34,7 @@ func NewCosmosdbRepository(ctx context.Context, endPoint, connectionString, data
 	}
 	client, err := azcosmos.NewClient(endPoint, credential, &clientOptions)
 	if err != nil {
-		telemetryClient.TrackException(ctx, "CosmosdbRepository::NewCosmosdbRepository::Error creating client", err, telemetry.Critical, nil, true)
+		xTelemetry.Error(ctx, "CosmosdbRepository::NewCosmosdbRepository::Error creating client", telemetry.String("Error", err.Error()))
 		return nil, err
 	}
 	cosmosClient := &CosmosClient{client: client}
@@ -64,18 +62,21 @@ func NewCosmosdbRepository(ctx context.Context, endPoint, connectionString, data
 
 // Creates a new document in CosmosDB
 func (r *CosmosdbRepository) CreateDocument(ctx context.Context, partitionKey string, document interface{}) error {
-	startTime := time.Now()
-	telemetryClient := telemetry.GetTelemetryClient(ctx)
+	xTelemetry := telemetry.GetXTelemetryClient(ctx)
+
+	//startTime := time.Now()
 
 	// Convert document to map[string]interface{}
 	documentMap := make(map[string]interface{})
 	if err := mapstructure.Decode(document, &documentMap); err != nil {
+		xTelemetry.Error(ctx, "CosmosdbRepository::CreateDocument::Error decoding document", telemetry.String("Error", err.Error()))
 		return err
 	}
 
 	// Convert document to json
 	docJson, err := json.Marshal(document)
 	if err != nil {
+		xTelemetry.Error(ctx, "CosmosdbRepository::CreateDocument::Error marshalling document", telemetry.String("Error", err.Error()))
 		return err
 	}
 
@@ -85,33 +86,42 @@ func (r *CosmosdbRepository) CreateDocument(ctx context.Context, partitionKey st
 	// Create an item
 	_, err = r.container.CreateItem(ctx, pk, docJson, nil)
 	if err != nil {
+		xTelemetry.Error(ctx, "CosmosdbRepository::CreateDocument::Error creating item", telemetry.String("Error", err.Error()))
 		return err
 	}
 
-	// Log telemetry dependency
-	telemetryProps := make(map[string]string)
-	for key, value := range documentMap {
-		telemetryProps[key] = fmt.Sprintf("%v", value)
-	}
-	telemetryClient.TrackDependency(ctx, "CosmosdbRepository", "CreateDocument", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), telemetryProps, true)
+	xTelemetry.Info(ctx, "CosmosdbRepository::CreateDocument::Document created")
+
+	/*
+			// Log telemetry dependency
+		telemetryProps := make(map[string]string)
+		for key, value := range documentMap {
+			telemetryProps[key] = fmt.Sprintf("%v", value)
+		}
+
+	*/
+	// TODO - telemetryClient.TrackDependency(ctx, "CosmosdbRepository", "CreateDocument", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), telemetryProps, true)
 
 	return nil
 }
 
 // Updates an existing document in CosmosDB
 func (r *CosmosdbRepository) UpdateDocument(ctx context.Context, partitionKey string, id string, document interface{}) error {
-	startTime := time.Now()
-	telemetryClient := telemetry.GetTelemetryClient(ctx)
+	xTelemetry := telemetry.GetXTelemetryClient(ctx)
+
+	// startTime := time.Now()
 
 	// Convert document to map[string]interface{}
 	documentMap := make(map[string]interface{})
 	if err := mapstructure.Decode(document, &documentMap); err != nil {
+		xTelemetry.Error(ctx, "CosmosdbRepository::UpdateDocument::Error decoding document", telemetry.String("Error", err.Error()))
 		return err
 	}
 
 	// Convert document to json
 	docJson, err := json.Marshal(document)
 	if err != nil {
+		xTelemetry.Error(ctx, "CosmosdbRepository::UpdateDocument::Error marshalling document", telemetry.String("Error", err.Error()))
 		return err
 	}
 
@@ -121,23 +131,28 @@ func (r *CosmosdbRepository) UpdateDocument(ctx context.Context, partitionKey st
 	// Update an item
 	_, err = r.container.UpsertItem(ctx, pk, docJson, nil)
 	if err != nil {
+		xTelemetry.Error(ctx, "CosmosdbRepository::UpdateDocument::Error updating item", telemetry.String("Error", err.Error()))
 		return err
 	}
 
-	// Log telemetry dependency
-	telemetryProps := make(map[string]string)
-	for key, value := range documentMap {
-		telemetryProps[key] = fmt.Sprintf("%v", value)
-	}
-	telemetryClient.TrackDependency(ctx, "CosmosdbRepository", "UpdateDocument", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), nil, true)
+	/*
+		// Log telemetry dependency
+		telemetryProps := make(map[string]string)
+		for key, value := range documentMap {
+			telemetryProps[key] = fmt.Sprintf("%v", value)
+		}
+		telemetryClient.TrackDependency(ctx, "CosmosdbRepository", "UpdateDocument", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), nil, true)
+	*/
+	xTelemetry.Info(ctx, "CosmosdbRepository::UpdateDocument::Document updated")
 
 	return nil
 }
 
 // Deletes an document from CosmosDB
 func (r *CosmosdbRepository) DeleteDocument(ctx context.Context, partitionKey string, id string) error {
-	startTime := time.Now()
-	telemetryClient := telemetry.GetTelemetryClient(ctx)
+	xTelemetry := telemetry.GetXTelemetryClient(ctx)
+
+	// startTime := time.Now()
 
 	// Create partition key
 	pk := azcosmos.NewPartitionKeyString(partitionKey)
@@ -145,23 +160,28 @@ func (r *CosmosdbRepository) DeleteDocument(ctx context.Context, partitionKey st
 	// Delete an item
 	_, err := r.container.DeleteItem(ctx, pk, id, nil)
 	if err != nil {
+		xTelemetry.Error(ctx, "CosmosdbRepository::DeleteDocument::Error deleting item", telemetry.String("Error", err.Error()))
 		return err
 	}
 
-	// Log telemetry dependency
-	telemetryProps := map[string]string{
-		"Id":           id,
-		"PartitionKey": partitionKey,
-	}
-	telemetryClient.TrackDependency(ctx, "CosmosdbRepository", "DeleteDocument", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), telemetryProps, true)
+	/*
+		// Log telemetry dependency
+		telemetryProps := map[string]string{
+			"Id":           id,
+			"PartitionKey": partitionKey,
+		}
+		telemetryClient.TrackDependency(ctx, "CosmosdbRepository", "DeleteDocument", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), telemetryProps, true)
+	*/
+	xTelemetry.Info(ctx, "CosmosdbRepository::DeleteDocument::Document deleted")
 
 	return nil
 }
 
 // Retrieves an document from CosmosDB
 func (r *CosmosdbRepository) GetDocument(ctx context.Context, partitionKey string, id string) (interface{}, error) {
-	startTime := time.Now()
-	telemetryClient := telemetry.GetTelemetryClient(ctx)
+	xTelemetry := telemetry.GetXTelemetryClient(ctx)
+
+	// startTime := time.Now()
 
 	// Create partition key
 	pk := azcosmos.NewPartitionKeyString(partitionKey)
@@ -169,6 +189,7 @@ func (r *CosmosdbRepository) GetDocument(ctx context.Context, partitionKey strin
 	// Retrieve an item
 	item, err := r.container.ReadItem(ctx, pk, id, nil)
 	if err != nil {
+		xTelemetry.Error(ctx, "CosmosdbRepository::GetDocument::Error reading item", telemetry.String("Error", err.Error()))
 		return nil, err
 	}
 
@@ -176,15 +197,19 @@ func (r *CosmosdbRepository) GetDocument(ctx context.Context, partitionKey strin
 	var readDoc map[string]interface{}
 	err = json.Unmarshal(item.Value, &readDoc)
 	if err != nil {
+		xTelemetry.Error(ctx, "CosmosdbRepository::GetDocument::Error unmarshalling item", telemetry.String("Error", err.Error()))
 		return nil, err
 	}
 
-	// Log telemetry dependency
-	telemetryProps := make(map[string]string)
-	for key, value := range readDoc {
-		telemetryProps[key] = fmt.Sprintf("%v", value)
-	}
-	telemetryClient.TrackDependency(ctx, "CosmosdbRepository", "GetDocument", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), telemetryProps, true)
+	/*
+		// Log telemetry dependency
+		telemetryProps := make(map[string]string)
+		for key, value := range readDoc {
+			telemetryProps[key] = fmt.Sprintf("%v", value)
+		}
+		telemetryClient.TrackDependency(ctx, "CosmosdbRepository", "GetDocument", "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), telemetryProps, true)
+	*/
+	xTelemetry.Info(ctx, "CosmosdbRepository::GetDocument::Document retrieved")
 
 	return readDoc, nil
 }

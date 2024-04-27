@@ -13,7 +13,7 @@ import (
 
 // Publish an event to the EventHub
 func (p *EventHubAdapterImpl) Publish(ctx context.Context, data message.Message) error {
-	telemetryClient := telemetry.GetTelemetryClient(ctx)
+	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 
 	// Add the operation ID to the context
 	ctx = context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, data.GetOperationID())
@@ -22,10 +22,7 @@ func (p *EventHubAdapterImpl) Publish(ctx context.Context, data message.Message)
 	// Check if EventHub is initialized
 	if p == nil {
 		err := errors.New("eventhub producer is not initialized")
-		properties := map[string]string{
-			"Error": err.Error(),
-		}
-		telemetryClient.TrackException(ctx, "EventHub::Publish::Failed", err, telemetry.Critical, properties, true)
+		xTelemetry.Error(ctx, "EventHub::Publish::Failed", telemetry.String("Error", err.Error()))
 		return err
 	}
 
@@ -39,7 +36,7 @@ func (p *EventHubAdapterImpl) Publish(ctx context.Context, data message.Message)
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		// Failed to marshal message, log dependency failure to App Insights
-		telemetryClient.TrackException(ctx, "EventHub::Publish::Failed", err, telemetry.Critical, nil, true)
+		xTelemetry.Error(ctx, "EventHub::Publish::Failed", telemetry.String("Error", err.Error()))
 		return err
 	}
 
@@ -56,11 +53,11 @@ func (p *EventHubAdapterImpl) Publish(ctx context.Context, data message.Message)
 		//
 		// If this is the _only_ message being added to the batch then it's too big in general, and
 		// will need to be split or shrunk to fit.
-		telemetryClient.TrackException(ctx, "Publish::Message too large to fit into this batch", err, telemetry.Critical, nil, true)
+		xTelemetry.Error(ctx, "EventHub::Publish::Message too large to fit into this batch", telemetry.String("Error", err.Error()))
 		return err
 	} else if err != nil {
 		// Some other error occurred
-		telemetryClient.TrackException(ctx, "Publish::Failed to add message to batch", err, telemetry.Critical, nil, true)
+		xTelemetry.Error(ctx, "EventHub::Publish::Failed to add message to batch", telemetry.String("Error", err.Error()))
 		return err
 	}
 
@@ -68,12 +65,13 @@ func (p *EventHubAdapterImpl) Publish(ctx context.Context, data message.Message)
 	err = p.ehProducerClient.SendEventDataBatch(context.TODO(), batch, nil)
 
 	if err != nil {
-		telemetryClient.TrackException(ctx, "Publish::Failed to send message", err, telemetry.Critical, nil, true)
+		xTelemetry.Error(ctx, "EventHub::Publish::Failed to send message", telemetry.String("Error", err.Error()))
 		return err
 	}
 
 	// Track the dependency to App Insights, using event hub name as the target
-	telemetryClient.TrackDependency(ctx, "Eventhub", "Publish EventHub message", "EventHub", p.eventHubName, true, startTime, time.Now(), nil, true)
+	xTelemetry.Info(ctx, "EventHub::Publish::Message sent", telemetry.String("EventHub", p.eventHubName), telemetry.String("Start Time", startTime.Format(time.RFC3339)), telemetry.String("End Time", time.Now().Format(time.RFC3339)))
+	// TODO	telemetryClient.TrackDependency(ctx, "Eventhub", "Publish EventHub message", "EventHub", p.eventHubName, true, startTime, time.Now(), nil, true)
 
 	return nil
 }
