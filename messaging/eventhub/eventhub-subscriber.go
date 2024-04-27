@@ -85,7 +85,7 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 
 		for _, eventItem := range events {
 			// Track the current time to log the telemetry and create a new operation uuid (add to the context)
-			//startTime := time.Now()
+			startTime := time.Now()
 
 			// eventItem.Body is a byte slice and needs to be unmarshalled into a message
 			receivedMessage := message.NewMessage("", nil, "", "", nil)
@@ -101,18 +101,9 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 				ctx := context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, receivedMessage.GetOperationID())
 				xTelemetry.Debug(ctx, "EventHubAdapter::processEventsForPartition::Message received", telemetry.String("PartitionID", partitionClient.PartitionID()))
 				eventChannel <- receivedMessage
-				xTelemetry.Info(ctx, "EventHubAdapter::processEventsForPartition::Message received", telemetry.String("PartitionID", partitionClient.PartitionID()), telemetry.String("Command", receivedMessage.GetCommand()), telemetry.String("Status", receivedMessage.GetStatus()))
-				/*
-						telemetryProps := map[string]string{
-							"OperationID": receivedMessage.GetOperationID(),
-							"Command":     receivedMessage.GetCommand(),
-							"Status":      receivedMessage.GetStatus(),
-						}
-					// TODO ---> telemetryClient.TrackDependency(ctx, "EventHubAdapter::processEventsForPartition", "Process message", "EventHub", a.eventHubName, true, startTime, time.Now(), telemetryProps, true)
-				*/
-			}
 
-			//telemetryClient.TrackDependency(ctx, "EventHubAdapter::processEventsForPartition", "Process message", "EventHub", a.eventHubName, true, startTime, time.Now(), nil, true)
+				xTelemetry.Dependency(ctx, "EventHub", a.eventHubName, true, time.Until(startTime), "EventHubAdapter::processEventsForPartition::Message received", telemetry.String("PartitionID", partitionClient.PartitionID()), telemetry.String("Command", receivedMessage.GetCommand()), telemetry.String("Status", receivedMessage.GetStatus()))
+			}
 		}
 
 		if len(events) != 0 {
