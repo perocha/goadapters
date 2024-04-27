@@ -11,7 +11,7 @@ import (
 )
 
 func (a *EventHubAdapterImpl) Subscribe(ctx context.Context) (<-chan message.Message, context.CancelFunc, error) {
-	telemetryClient := telemetry.GetTelemetryClient(ctx)
+	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 	eventChannel := make(chan message.Message)
 
 	// Run all partition clients
@@ -21,7 +21,7 @@ func (a *EventHubAdapterImpl) Subscribe(ctx context.Context) (<-chan message.Mes
 
 	go func() {
 		if err := a.ehProcessor.Run(processorCtx); err != nil {
-			telemetryClient.TrackException(ctx, "EventHubAdapter::Subscribe::Error processor run", err, telemetry.Critical, nil, true)
+			xTelemetry.Error(ctx, "EventHubAdapter::Subscribe::Error processor run", telemetry.String("Error", err.Error()))
 			processorCancel()
 			a.ehConsumerClient.Close(context.TODO())
 		}
@@ -32,7 +32,7 @@ func (a *EventHubAdapterImpl) Subscribe(ctx context.Context) (<-chan message.Mes
 
 func (a *EventHubAdapterImpl) dispatchPartitionClients(ctx context.Context, eventChannel chan message.Message) {
 	for {
-		telemetryClient := telemetry.GetTelemetryClient(ctx)
+		xTelemetry := telemetry.GetXTelemetryClient(ctx)
 
 		// Get the next partition client
 		partitionClient := a.ehProcessor.NextPartitionClient(context.TODO())
@@ -43,14 +43,12 @@ func (a *EventHubAdapterImpl) dispatchPartitionClients(ctx context.Context, even
 		}
 
 		go func() {
-			telemetryClient.TrackTrace(ctx, "EventHubAdapter::dispatchPartitionClients::Partition ID "+partitionClient.PartitionID()+"::Client initialized", telemetry.Information, nil, true)
+			// Initialize the partition client
+			xTelemetry.Info(ctx, "EventHubAdapter::dispatchPartitionClients::Client initialized", telemetry.String("PartitionID", partitionClient.PartitionID()))
 
 			// Process events for the partition client
 			if err := a.processEventsForPartition(ctx, partitionClient, eventChannel); err != nil {
-				properties := map[string]string{
-					"PartitionID": partitionClient.PartitionID(),
-				}
-				telemetryClient.TrackException(ctx, "EventHubAdapter::dispatchPartitionClients::Error processing events", err, telemetry.Error, properties, true)
+				xTelemetry.Error(ctx, "EventHubAdapter::dispatchPartitionClients::Error processing events", telemetry.String("PartitionID", partitionClient.PartitionID()), telemetry.String("Error", err.Error()))
 				//panic(err)
 				return
 			}
