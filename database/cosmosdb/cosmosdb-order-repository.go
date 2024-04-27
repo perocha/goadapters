@@ -91,7 +91,7 @@ func (r *CosmosdbRepository) CreateDocument(ctx context.Context, partitionKey st
 		return err
 	}
 
-	xTelemetry.Dependency(ctx, "CosmosDB", r.client.Endpoint(), true, time.Until(startTime), "CreateDocument success")
+	xTelemetry.Dependency(ctx, "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), "CreateDocument success")
 
 	return nil
 }
@@ -126,7 +126,7 @@ func (r *CosmosdbRepository) UpdateDocument(ctx context.Context, partitionKey st
 		return err
 	}
 
-	xTelemetry.Dependency(ctx, "CosmosDB", r.client.Endpoint(), true, time.Until(startTime), "UpdateDocument success")
+	xTelemetry.Dependency(ctx, "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), "UpdateDocument success")
 
 	return nil
 }
@@ -147,7 +147,7 @@ func (r *CosmosdbRepository) DeleteDocument(ctx context.Context, partitionKey st
 		return err
 	}
 
-	xTelemetry.Dependency(ctx, "CosmosDB", r.client.Endpoint(), true, time.Until(startTime), "DeleteDocument success")
+	xTelemetry.Dependency(ctx, "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), "DeleteDocument success")
 
 	return nil
 }
@@ -176,7 +176,7 @@ func (r *CosmosdbRepository) GetDocument(ctx context.Context, partitionKey strin
 		return nil, err
 	}
 
-	xTelemetry.Dependency(ctx, "CosmosDB", r.client.Endpoint(), true, time.Until(startTime), "GetDocument success")
+	xTelemetry.Dependency(ctx, "CosmosDB", r.client.Endpoint(), true, startTime, time.Now(), "GetDocument success")
 
 	return readDoc, nil
 }

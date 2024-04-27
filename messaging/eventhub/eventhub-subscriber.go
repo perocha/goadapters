@@ -102,7 +102,7 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 				xTelemetry.Debug(ctx, "EventHubAdapter::processEventsForPartition::Message received", telemetry.String("PartitionID", partitionClient.PartitionID()))
 				eventChannel <- receivedMessage
 
-				xTelemetry.Dependency(ctx, "EventHub", a.eventHubName, true, time.Until(startTime), "EventHubAdapter::processEventsForPartition::Message received", telemetry.String("PartitionID", partitionClient.PartitionID()), telemetry.String("Command", receivedMessage.GetCommand()), telemetry.String("Status", receivedMessage.GetStatus()))
+				xTelemetry.Dependency(ctx, "EventHub", a.eventHubName, true, startTime, time.Now(), "EventHubAdapter::processEventsForPartition::Message received", telemetry.String("PartitionID", partitionClient.PartitionID()), telemetry.String("Command", receivedMessage.GetCommand()), telemetry.String("Status", receivedMessage.GetStatus()))
 			}
 		}
 

@@ -70,7 +70,7 @@ func (p *EventHubAdapterImpl) Publish(ctx context.Context, data message.Message)
 	}
 
 	// Track the dependency to App Insights, using event hub name as the target
-	xTelemetry.Dependency(ctx, "EventHub", p.eventHubName, true, time.Until(startTime), "Publish EventHub message success")
+	xTelemetry.Dependency(ctx, "EventHub", p.eventHubName, true, startTime, time.Now(), "Publish EventHub message success")
 
 	return nil
 }
