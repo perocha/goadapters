@@ -12,43 +12,48 @@ import (
 )
 
 // HTTPAdapterImpl implements the MessagingSystem interface
-type HTTPAdapterImpl struct {
-	httpClient  *http.Client
-	endPointURL string
-	portNumber  string
+type HTTPAdapter struct {
+	httpClient   *http.Client
+	httpEndPoint *HTTPEndPoint
 }
 
 // ConsumerInitializer
-func ConsumerInitializer(ctx context.Context, endPointURL string, portNumber string) (*HTTPAdapterImpl, error) {
+func ConsumerInitializer(ctx context.Context, endPointURL string, portNumber string) (*HTTPAdapter, error) {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 
+	// Create a new HTTP client
 	httpClient := &http.Client{}
+
+	// Create a new HTTP endpoint
+	httpEndPoint := NewEndpoint(endPointURL, portNumber)
 
 	xTelemetry.Debug(ctx, "HTTPAdapter::ConsumerInitializer", telemetry.String("PortNumber", portNumber))
 
-	return &HTTPAdapterImpl{
-		httpClient:  httpClient,
-		endPointURL: endPointURL,
-		portNumber:  portNumber,
+	return &HTTPAdapter{
+		httpClient:   httpClient,
+		httpEndPoint: httpEndPoint,
 	}, nil
 }
 
 // PublisherInitializer
-func PublisherInitializer(ctx context.Context, endPointURL string, portNumber string) (*HTTPAdapterImpl, error) {
+func PublisherInitializer(ctx context.Context, endPointURL string, portNumber string) (*HTTPAdapter, error) {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 	xTelemetry.Debug(ctx, "HTTPAdapter::PublisherInitializer", telemetry.String("endPointURL", endPointURL), telemetry.String("PortNumber", portNumber))
 
+	// Create a new HTTP client
 	httpClient := &http.Client{}
 
-	return &HTTPAdapterImpl{
-		httpClient:  httpClient,
-		endPointURL: endPointURL,
-		portNumber:  portNumber,
+	// Create a new HTTP endpoint
+	httpEndPoint := NewEndpoint(endPointURL, portNumber)
+
+	return &HTTPAdapter{
+		httpClient:   httpClient,
+		httpEndPoint: httpEndPoint,
 	}, nil
 }
 
 // Publish a message with an optional endpoint URL
-func (a *HTTPAdapterImpl) Publish(ctx context.Context, data messaging.Message) error {
+func (a *HTTPAdapter) Publish(ctx context.Context, data messaging.Message) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 	xTelemetry.Debug(ctx, "HTTPAdapter::Publish", telemetry.String("Command", data.GetCommand()), telemetry.String("Status", data.GetStatus()), telemetry.String("Data", string(data.GetData())))
 
@@ -60,7 +65,7 @@ func (a *HTTPAdapterImpl) Publish(ctx context.Context, data messaging.Message) e
 	}
 
 	// Construct the full endpoint URL
-	endpointURL := a.endPointURL + ":" + a.portNumber
+	endpointURL := a.httpEndPoint.GetEndPointURL() + ":" + a.httpEndPoint.GetPortNumber()
 
 	// Create a new HTTP request
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpointURL, bytes.NewBuffer(jsonData))
@@ -90,7 +95,7 @@ func (a *HTTPAdapterImpl) Publish(ctx context.Context, data messaging.Message) e
 }
 
 // Subscribe to messages
-func (a *HTTPAdapterImpl) Subscribe(ctx context.Context) (<-chan messaging.Message, context.CancelFunc, error) {
+func (a *HTTPAdapter) Subscribe(ctx context.Context) (<-chan messaging.Message, context.CancelFunc, error) {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 
 	xTelemetry.Debug(ctx, "HTTPAdapter::Subscribe")
@@ -98,7 +103,7 @@ func (a *HTTPAdapterImpl) Subscribe(ctx context.Context) (<-chan messaging.Messa
 }
 
 // Close the adapter
-func (a *HTTPAdapterImpl) Close(ctx context.Context) error {
+func (a *HTTPAdapter) Close(ctx context.Context) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 	xTelemetry.Debug(ctx, "HTTPAdapter::Close http adapter")
 
@@ -107,19 +112,16 @@ func (a *HTTPAdapterImpl) Close(ctx context.Context) error {
 }
 
 // Set the endpoint URL and port number
-func (a *HTTPAdapterImpl) SetEndPoint(ctx context.Context, endPointURL string, portNumber string) {
+func (a *HTTPAdapter) UpdateEndPoint(ctx context.Context, endPoint HTTPEndPoint) {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
-	xTelemetry.Debug(ctx, "HTTPAdapter::SetEndPoint", telemetry.String("endPointURL", endPointURL), telemetry.String("PortNumber", portNumber))
-	a.endPointURL = endPointURL
-	a.portNumber = portNumber
+	xTelemetry.Debug(ctx, "HTTPAdapter::SetEndPoint", telemetry.String("endPointURL", a.httpEndPoint.GetEndPointURL()), telemetry.String("PortNumber", a.httpEndPoint.GetPortNumber()))
+
+	a.httpEndPoint.SetEndPointURL(endPoint.GetEndPointURL())
+	a.httpEndPoint.SetPortNumber(endPoint.GetPortNumber())
 }
 
-// Get the endpoint URL
-func (a *HTTPAdapterImpl) GetEndPoint() string {
-	return a.endPointURL
-}
-
-// Get the port number
-func (a *HTTPAdapterImpl) GetPortNumber() string {
-	return a.portNumber
+// Set the endpoint
+func (a *HTTPAdapter) SetEndPoint(endPoint HTTPEndPoint) error {
+	a.httpEndPoint = &endPoint
+	return nil
 }

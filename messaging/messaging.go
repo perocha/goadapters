@@ -8,6 +8,7 @@ type MessagingSystem interface {
 	Subscribe(ctx context.Context) (<-chan Message, context.CancelFunc, error)
 	Close(ctx context.Context) error
 	UpdateEndPoint(ctx context.Context, endPoint EndPoint) error
+	SetEndPoint(endPoint EndPoint) error
 }
 
 type EndPoint interface {
