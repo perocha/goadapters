@@ -111,17 +111,35 @@ func (a *HTTPAdapter) Close(ctx context.Context) error {
 	return nil
 }
 
-// Set the endpoint URL and port number
-func (a *HTTPAdapter) UpdateEndPoint(ctx context.Context, endPoint HTTPEndPoint) {
+// Generic endpoint update method
+func (a *HTTPAdapter) UpdateEndPoint(ctx context.Context, endPoint messaging.EndPoint) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 	xTelemetry.Debug(ctx, "HTTPAdapter::SetEndPoint", telemetry.String("endPointURL", a.httpEndPoint.GetEndPointURL()), telemetry.String("PortNumber", a.httpEndPoint.GetPortNumber()))
 
-	a.httpEndPoint.SetEndPointURL(endPoint.GetEndPointURL())
-	a.httpEndPoint.SetPortNumber(endPoint.GetPortNumber())
+	httpEndPoint, ok := endPoint.(*HTTPEndPoint)
+	if !ok {
+		return errors.New("endpoint type is not supported by HTTP adapter")
+	}
+
+	return a.UpdateHTTPAdapterEndPoint(ctx, httpEndPoint)
 }
 
-// Set the endpoint
-func (a *HTTPAdapter) SetEndPoint(endPoint HTTPEndPoint) error {
-	a.httpEndPoint = &endPoint
+// Update the HTTP adapter endpoint
+func (a *HTTPAdapter) UpdateHTTPAdapterEndPoint(ctx context.Context, endPoint *HTTPEndPoint) error {
+	xTelemetry := telemetry.GetXTelemetryClient(ctx)
+	xTelemetry.Debug(ctx, "HTTPAdapter::UpdateHTTPAdapterEndPoint", telemetry.String("endPointURL", endPoint.GetEndPointURL()), telemetry.String("PortNumber", endPoint.GetPortNumber()))
+
+	a.httpEndPoint.SetEndPointURL(endPoint.GetEndPointURL())
+	a.httpEndPoint.SetPortNumber(endPoint.GetPortNumber())
 	return nil
+}
+
+// Generic method to get the endpoint
+func (a *HTTPAdapter) GetEndPoint() string {
+	return a.GetHTTPAdapterEndPoint()
+}
+
+// Get the HTTP adapter endpoint
+func (a *HTTPAdapter) GetHTTPAdapterEndPoint() string {
+	return a.httpEndPoint.GetEndPoint()
 }

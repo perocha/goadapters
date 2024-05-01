@@ -14,6 +14,16 @@ func NewEndpoint(endPointURL string, portNumber string) *HTTPEndPoint {
 	}
 }
 
+// Generic method to get the endpoint
+func (e *HTTPEndPoint) GetEndPoint() string {
+	return e.endPointURL + ":" + e.portNumber
+}
+
+// Generic method to set the endpoint
+func (e *HTTPEndPoint) SetEndPoint(endPoint string) {
+	e.endPointURL = endPoint
+}
+
 // Get the endpoint URL
 func (e *HTTPEndPoint) GetEndPointURL() string {
 	return e.endPointURL
