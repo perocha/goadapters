@@ -24,7 +24,7 @@ func ConsumerInitializer(ctx context.Context, endPointURL string, portNumber str
 
 	httpClient := &http.Client{}
 
-	xTelemetry.Info(ctx, "HTTPAdapter::ConsumerInitializer", telemetry.String("PortNumber", portNumber))
+	xTelemetry.Debug(ctx, "HTTPAdapter::ConsumerInitializer", telemetry.String("PortNumber", portNumber))
 
 	return &HTTPAdapterImpl{
 		httpClient:  httpClient,
@@ -36,7 +36,7 @@ func ConsumerInitializer(ctx context.Context, endPointURL string, portNumber str
 // PublisherInitializer
 func PublisherInitializer(ctx context.Context, endPointURL string, portNumber string) (*HTTPAdapterImpl, error) {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
-	xTelemetry.Info(ctx, "HTTPAdapter::PublisherInitializer", telemetry.String("endPointURL", endPointURL), telemetry.String("PortNumber", portNumber))
+	xTelemetry.Debug(ctx, "HTTPAdapter::PublisherInitializer", telemetry.String("endPointURL", endPointURL), telemetry.String("PortNumber", portNumber))
 
 	httpClient := &http.Client{}
 
@@ -50,7 +50,7 @@ func PublisherInitializer(ctx context.Context, endPointURL string, portNumber st
 // Publish a message with an optional endpoint URL
 func (a *HTTPAdapterImpl) Publish(ctx context.Context, data message.Message) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
-	xTelemetry.Info(ctx, "HTTPAdapter::Publish", telemetry.String("Command", data.GetCommand()), telemetry.String("Status", data.GetStatus()), telemetry.String("Data", string(data.GetData())))
+	xTelemetry.Debug(ctx, "HTTPAdapter::Publish", telemetry.String("Command", data.GetCommand()), telemetry.String("Status", data.GetStatus()), telemetry.String("Data", string(data.GetData())))
 
 	// Convert the message to JSON
 	jsonData, err := data.Serialize()
@@ -93,14 +93,14 @@ func (a *HTTPAdapterImpl) Publish(ctx context.Context, data message.Message) err
 func (a *HTTPAdapterImpl) Subscribe(ctx context.Context) (<-chan message.Message, context.CancelFunc, error) {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 
-	xTelemetry.Info(ctx, "HTTPAdapter::Subscribe")
+	xTelemetry.Debug(ctx, "HTTPAdapter::Subscribe")
 	return nil, nil, nil
 }
 
 // Set the endpoint URL and port number
 func (a *HTTPAdapterImpl) SetEndPoint(ctx context.Context, endPointURL string, portNumber string) {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
-	xTelemetry.Info(ctx, "HTTPAdapter::SetEndPoint", telemetry.String("endPointURL", endPointURL), telemetry.String("PortNumber", portNumber))
+	xTelemetry.Debug(ctx, "HTTPAdapter::SetEndPoint", telemetry.String("endPointURL", endPointURL), telemetry.String("PortNumber", portNumber))
 	a.endPointURL = endPointURL
 	a.portNumber = portNumber
 }

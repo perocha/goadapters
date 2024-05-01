@@ -2,6 +2,7 @@ package httpadapter_test
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +14,14 @@ import (
 	"github.com/perocha/goutils/pkg/telemetry"
 	"github.com/stretchr/testify/assert"
 )
+
+type MockMessage struct {
+	message.Message
+}
+
+func (m *MockMessage) Serialize() ([]byte, error) {
+	return nil, errors.New("forced serialize error")
+}
 
 func initializeTelemetry() context.Context {
 	// Initialize telemetry package
@@ -77,4 +86,120 @@ func TestPublish(t *testing.T) {
 	msg := message.NewMessage("1234", nil, "success", "test", []byte("test"))
 	err = adapter.Publish(ctx, msg)
 	assert.NoError(t, err)
+}
+
+func TestGet(t *testing.T) {
+	ctx := initializeTelemetry()
+	endPointURL := "http://localhost"
+	portNumber := "8080"
+
+	// Initialize the HTTP adapter
+	adapter, err := httpadapter.ConsumerInitializer(ctx, endPointURL, portNumber)
+	assert.NoError(t, err)
+
+	// Get the endpoint URL and port number
+	assert.Equal(t, endPointURL, adapter.GetEndPoint())
+	assert.Equal(t, portNumber, adapter.GetPortNumber())
+}
+
+func TestSet(t *testing.T) {
+	ctx := initializeTelemetry()
+	endPointURL := "http://localhost"
+	portNumber := "8080"
+
+	// Initialize the HTTP adapter
+	adapter, err := httpadapter.ConsumerInitializer(ctx, endPointURL, portNumber)
+	assert.NoError(t, err)
+
+	// Set the endpoint URL and port number
+	newEndPointURL := "http://newhost"
+	newPortNumber := "9090"
+	adapter.SetEndPoint(ctx, newEndPointURL, newPortNumber)
+	assert.Equal(t, newEndPointURL, adapter.GetEndPoint())
+	assert.Equal(t, newPortNumber, adapter.GetPortNumber())
+}
+
+func TestSubscribe(t *testing.T) {
+	ctx := initializeTelemetry()
+	endPointURL := "http://localhost"
+	portNumber := "8080"
+
+	// Initialize the HTTP adapter
+	adapter, err := httpadapter.ConsumerInitializer(ctx, endPointURL, portNumber)
+	assert.NoError(t, err)
+
+	// Subscribe to messages
+	_, _, err = adapter.Subscribe(ctx)
+	assert.NoError(t, err)
+}
+
+func TestPublish_ErrorMakingHttpRequest(t *testing.T) {
+	ctx := initializeTelemetry()
+	endPointURL := "http://localhost"
+	portNumber := "8080"
+
+	adapter, _ := httpadapter.PublisherInitializer(ctx, endPointURL, portNumber)
+
+	// Create a message that will not cause an error when serialized
+	msg := message.NewMessage("1234", nil, "success", "test", []byte("test"))
+
+	// Force an error when making the HTTP request by providing an invalid URL
+	adapter.SetEndPoint(ctx, "://invalid-url", "8080")
+
+	err := adapter.Publish(ctx, msg)
+	assert.Error(t, err)
+}
+
+func TestPublish_ErrorIncorrectPort(t *testing.T) {
+	ctx := initializeTelemetry()
+	endPointURL := "http://localhost"
+	portNumber := "8081"
+
+	adapter, _ := httpadapter.PublisherInitializer(ctx, endPointURL, portNumber)
+
+	// Create a message that will not cause an error when serialized
+	msg := message.NewMessage("1234", nil, "success", "test", []byte("test"))
+
+	// Force an error when making the HTTP request by providing an invalid URL
+	adapter.SetEndPoint(ctx, "http://localhost", "8080")
+
+	err := adapter.Publish(ctx, msg)
+	assert.Error(t, err)
+}
+
+func TestPublish_NonOKResponse(t *testing.T) {
+	ctx := initializeTelemetry()
+	// Create a mock HTTP server that responds with a 500 Internal Server Error status
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	endPointURL := "http://localhost"
+	portNumber := strings.Split(server.URL, ":")[2]
+	adapter, _ := httpadapter.PublisherInitializer(ctx, endPointURL, portNumber)
+
+	// Create a message that will not cause an error when serialized
+	msg := message.NewMessage("1234", nil, "success", "test", []byte("test"))
+
+	err := adapter.Publish(ctx, msg)
+	assert.Error(t, err)
+	assert.Equal(t, "server returned non-OK status code", err.Error())
+}
+
+func TestPublish_ErrorSerializing(t *testing.T) {
+	ctx := initializeTelemetry()
+	endPointURL := "http://localhost"
+	portNumber := "8080"
+
+	adapter, _ := httpadapter.PublisherInitializer(ctx, endPointURL, portNumber)
+
+	// Create a mock message that will cause an error when serialized
+	msg := &MockMessage{
+		Message: message.NewMessage("1234", nil, "success", "test", []byte("test")),
+	}
+
+	err := adapter.Publish(ctx, msg)
+	assert.Error(t, err)
+	assert.Equal(t, "forced serialize error", err.Error())
 }
