@@ -97,6 +97,15 @@ func (a *HTTPAdapterImpl) Subscribe(ctx context.Context) (<-chan message.Message
 	return nil, nil, nil
 }
 
+// Close the adapter
+func (a *HTTPAdapterImpl) Close(ctx context.Context) error {
+	xTelemetry := telemetry.GetXTelemetryClient(ctx)
+	xTelemetry.Debug(ctx, "HTTPAdapter::Close http adapter")
+
+	a.httpClient.CloseIdleConnections()
+	return nil
+}
+
 // Set the endpoint URL and port number
 func (a *HTTPAdapterImpl) SetEndPoint(ctx context.Context, endPointURL string, portNumber string) {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)

@@ -203,3 +203,14 @@ func TestPublish_ErrorSerializing(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "forced serialize error", err.Error())
 }
+
+func TestClose(t *testing.T) {
+	ctx := initializeTelemetry()
+	endPointURL := "http://localhost"
+	portNumber := "8080"
+
+	adapter, _ := httpadapter.PublisherInitializer(ctx, endPointURL, portNumber)
+
+	err := adapter.Close(ctx)
+	assert.NoError(t, err)
+}
