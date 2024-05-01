@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azeventhubs"
-	"github.com/perocha/goadapters/messaging/message"
+	"github.com/perocha/goadapters/messaging"
 	"github.com/perocha/goutils/pkg/telemetry"
 )
 
-func (a *EventHubAdapterImpl) Subscribe(ctx context.Context) (<-chan message.Message, context.CancelFunc, error) {
+func (a *EventHubAdapterImpl) Subscribe(ctx context.Context) (<-chan messaging.Message, context.CancelFunc, error) {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
-	eventChannel := make(chan message.Message)
+	eventChannel := make(chan messaging.Message)
 
 	// Run all partition clients
 	go a.dispatchPartitionClients(ctx, eventChannel)
@@ -30,7 +30,7 @@ func (a *EventHubAdapterImpl) Subscribe(ctx context.Context) (<-chan message.Mes
 	return eventChannel, processorCancel, nil
 }
 
-func (a *EventHubAdapterImpl) dispatchPartitionClients(ctx context.Context, eventChannel chan message.Message) {
+func (a *EventHubAdapterImpl) dispatchPartitionClients(ctx context.Context, eventChannel chan messaging.Message) {
 	for {
 		xTelemetry := telemetry.GetXTelemetryClient(ctx)
 
@@ -57,7 +57,7 @@ func (a *EventHubAdapterImpl) dispatchPartitionClients(ctx context.Context, even
 }
 
 // ProcessEvents implements the logic that is executed when events are received from the event hub
-func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, partitionClient *azeventhubs.ProcessorPartitionClient, eventChannel chan message.Message) error {
+func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, partitionClient *azeventhubs.ProcessorPartitionClient, eventChannel chan messaging.Message) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 
 	// Defer the shutdown of the partition resources
@@ -88,13 +88,13 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 			startTime := time.Now()
 
 			// eventItem.Body is a byte slice and needs to be unmarshalled into a message
-			receivedMessage := message.NewMessage("", nil, "", "", nil)
+			receivedMessage := messaging.NewMessage("", nil, "", "", nil)
 			err := receivedMessage.Deserialize(eventItem.Body)
 
 			if err != nil {
 				// Error unmarshalling the event body, send an error event to the event channel
 				xTelemetry.Error(ctx, "EventHubAdapter::processEventsForPartition::Error unmarshalling event body", telemetry.String("PartitionID", partitionClient.PartitionID()), telemetry.String("Error", err.Error()))
-				errorMessage := message.NewMessage("", err, "", "", nil)
+				errorMessage := messaging.NewMessage("", err, "", "", nil)
 				eventChannel <- errorMessage
 			} else {
 				// If we reach this point, we have a message!! Get the operation ID from the message and add it to the context

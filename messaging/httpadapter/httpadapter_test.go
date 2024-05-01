@@ -9,14 +9,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/perocha/goadapters/messaging"
 	"github.com/perocha/goadapters/messaging/httpadapter"
-	"github.com/perocha/goadapters/messaging/message"
 	"github.com/perocha/goutils/pkg/telemetry"
 	"github.com/stretchr/testify/assert"
 )
 
 type MockMessage struct {
-	message.Message
+	messaging.Message
 }
 
 func (m *MockMessage) Serialize() ([]byte, error) {
@@ -83,7 +83,7 @@ func TestPublish(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Build mock Message
-	msg := message.NewMessage("1234", nil, "success", "test", []byte("test"))
+	msg := messaging.NewMessage("1234", nil, "success", "test", []byte("test"))
 	err = adapter.Publish(ctx, msg)
 	assert.NoError(t, err)
 }
@@ -141,7 +141,7 @@ func TestPublish_ErrorMakingHttpRequest(t *testing.T) {
 	adapter, _ := httpadapter.PublisherInitializer(ctx, endPointURL, portNumber)
 
 	// Create a message that will not cause an error when serialized
-	msg := message.NewMessage("1234", nil, "success", "test", []byte("test"))
+	msg := messaging.NewMessage("1234", nil, "success", "test", []byte("test"))
 
 	// Force an error when making the HTTP request by providing an invalid URL
 	adapter.SetEndPoint(ctx, "://invalid-url", "8080")
@@ -158,7 +158,7 @@ func TestPublish_ErrorIncorrectPort(t *testing.T) {
 	adapter, _ := httpadapter.PublisherInitializer(ctx, endPointURL, portNumber)
 
 	// Create a message that will not cause an error when serialized
-	msg := message.NewMessage("1234", nil, "success", "test", []byte("test"))
+	msg := messaging.NewMessage("1234", nil, "success", "test", []byte("test"))
 
 	// Force an error when making the HTTP request by providing an invalid URL
 	adapter.SetEndPoint(ctx, "http://localhost", "8080")
@@ -180,7 +180,7 @@ func TestPublish_NonOKResponse(t *testing.T) {
 	adapter, _ := httpadapter.PublisherInitializer(ctx, endPointURL, portNumber)
 
 	// Create a message that will not cause an error when serialized
-	msg := message.NewMessage("1234", nil, "success", "test", []byte("test"))
+	msg := messaging.NewMessage("1234", nil, "success", "test", []byte("test"))
 
 	err := adapter.Publish(ctx, msg)
 	assert.Error(t, err)
@@ -196,7 +196,7 @@ func TestPublish_ErrorSerializing(t *testing.T) {
 
 	// Create a mock message that will cause an error when serialized
 	msg := &MockMessage{
-		Message: message.NewMessage("1234", nil, "success", "test", []byte("test")),
+		Message: messaging.NewMessage("1234", nil, "success", "test", []byte("test")),
 	}
 
 	err := adapter.Publish(ctx, msg)

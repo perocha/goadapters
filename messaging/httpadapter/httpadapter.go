@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/perocha/goadapters/messaging/message"
+	"github.com/perocha/goadapters/messaging"
 	"github.com/perocha/goutils/pkg/telemetry"
 )
 
@@ -48,7 +48,7 @@ func PublisherInitializer(ctx context.Context, endPointURL string, portNumber st
 }
 
 // Publish a message with an optional endpoint URL
-func (a *HTTPAdapterImpl) Publish(ctx context.Context, data message.Message) error {
+func (a *HTTPAdapterImpl) Publish(ctx context.Context, data messaging.Message) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 	xTelemetry.Debug(ctx, "HTTPAdapter::Publish", telemetry.String("Command", data.GetCommand()), telemetry.String("Status", data.GetStatus()), telemetry.String("Data", string(data.GetData())))
 
@@ -90,7 +90,7 @@ func (a *HTTPAdapterImpl) Publish(ctx context.Context, data message.Message) err
 }
 
 // Subscribe to messages
-func (a *HTTPAdapterImpl) Subscribe(ctx context.Context) (<-chan message.Message, context.CancelFunc, error) {
+func (a *HTTPAdapterImpl) Subscribe(ctx context.Context) (<-chan messaging.Message, context.CancelFunc, error) {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 
 	xTelemetry.Debug(ctx, "HTTPAdapter::Subscribe")
