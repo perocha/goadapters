@@ -97,9 +97,52 @@ func (a *HTTPAdapter) Publish(ctx context.Context, data messaging.Message) error
 // Subscribe to messages
 func (a *HTTPAdapter) Subscribe(ctx context.Context) (<-chan messaging.Message, context.CancelFunc, error) {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
-
 	xTelemetry.Debug(ctx, "HTTPAdapter::Subscribe")
-	return nil, nil, nil
+
+	// Create a new channel
+	messageChannel := make(chan messaging.Message)
+
+	// Create a new context with a cancel function
+	ctx, cancel := context.WithCancel(ctx)
+
+	// Construct the full endpoint URL
+	endpointURL := a.httpEndPoint.GetEndPoint()
+
+	// Listen for incoming HTTP requests
+	http.HandleFunc(endpointURL, func(w http.ResponseWriter, r *http.Request) {
+		// Read the request body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			xTelemetry.Error(ctx, "HTTPAdapter::Subscribe::Failed to read request body", telemetry.String("Error", err.Error()))
+			http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+			return
+		}
+
+		// Create a new message
+		message := messaging.NewMessage("", nil, "", "", nil)
+		err = message.Deserialize(body)
+		if err != nil {
+			xTelemetry.Error(ctx, "HTTPAdapter::Subscribe::Failed to deserialize message", telemetry.String("Error", err.Error()))
+			http.Error(w, "Failed to deserialize message", http.StatusInternalServerError)
+			return
+		}
+
+		// Send the message to the channel
+		messageChannel <- message
+
+		// Send an OK response
+		w.WriteHeader(http.StatusOK)
+	})
+
+	// Start the HTTP server
+	go func() {
+		err := http.ListenAndServe(a.httpEndPoint.GetEndPoint(), nil)
+		if err != nil {
+			xTelemetry.Error(ctx, "HTTPAdapter::Subscribe::Failed to start HTTP server", telemetry.String("Error", err.Error()))
+		}
+	}()
+
+	return messageChannel, cancel, nil
 }
 
 // Close the adapter
