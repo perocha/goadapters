@@ -65,7 +65,7 @@ func (a *HTTPAdapter) Publish(ctx context.Context, data messaging.Message) error
 	}
 
 	// Construct the full endpoint URL
-	endpointURL := a.httpEndPoint.GetEndPointURL() + ":" + a.httpEndPoint.GetPortNumber()
+	endpointURL := a.httpEndPoint.GetEndPoint()
 
 	// Create a new HTTP request
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpointURL, bytes.NewBuffer(jsonData))

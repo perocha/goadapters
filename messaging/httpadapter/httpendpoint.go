@@ -1,5 +1,7 @@
 package httpadapter
 
+import "net/url"
+
 // HTTPEndPoint implements the EndPoint interface
 type HTTPEndPoint struct {
 	endPointURL string
@@ -16,7 +18,13 @@ func NewEndpoint(endPointURL string, portNumber string) *HTTPEndPoint {
 
 // Generic method to get the endpoint
 func (e *HTTPEndPoint) GetEndPoint() string {
-	return e.endPointURL + ":" + e.portNumber
+	// Construct the url
+	url := &url.URL{
+		Scheme: "http",
+		Host:   e.endPointURL + ":" + e.portNumber,
+	}
+
+	return url.String()
 }
 
 // Generic method to set the endpoint
