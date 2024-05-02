@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/perocha/goadapters/comms"
 	"github.com/perocha/goadapters/comms/httpadapter"
 	"github.com/perocha/goadapters/messaging"
 	"github.com/perocha/goutils/pkg/telemetry"
@@ -36,6 +37,10 @@ func initializeTelemetry() context.Context {
 	return ctx
 }
 
+func testInterfaceImplementation(t *testing.T, adapter comms.CommsSystem) {
+	assert.Implements(t, (*comms.CommsSystem)(nil), adapter)
+}
+
 func TestInitializer(t *testing.T) {
 	ctx := initializeTelemetry()
 	host := "http://localhost"
@@ -47,9 +52,16 @@ func TestInitializer(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, adapter)
 	assert.IsType(t, &httpadapter.HttpSendAdapter{}, adapter)
-	assert.Equal(t, host, adapter.GetEndPoint().GetHost())
-	assert.Equal(t, portNumber, adapter.GetEndPoint().GetPortNumber())
-	assert.Equal(t, path, adapter.GetEndPoint().GetPath())
+
+	httpEndPoint, ok := adapter.GetEndPoint().(*httpadapter.HTTPEndPoint)
+	if !ok {
+		// Test error, should not reach here
+		assert.Fail(t, "Failed to cast to HTTPEndPoint")
+	}
+
+	assert.Equal(t, host, httpEndPoint.GetHost())
+	assert.Equal(t, portNumber, httpEndPoint.GetPortNumber())
+	assert.Equal(t, path, httpEndPoint.GetPath())
 }
 
 func TestPublish(t *testing.T) {
@@ -87,10 +99,15 @@ func TestGet(t *testing.T) {
 	adapter, err := httpadapter.Initializer(ctx, host, portNumber, path)
 	assert.NoError(t, err)
 
-	// Get host, port number, and path
-	assert.Equal(t, host, adapter.GetEndPoint().GetHost())
-	assert.Equal(t, portNumber, adapter.GetEndPoint().GetPortNumber())
-	assert.Equal(t, path, adapter.GetEndPoint().GetPath())
+	httpEndPoint, ok := adapter.GetEndPoint().(*httpadapter.HTTPEndPoint)
+	if !ok {
+		// Test error, should not reach here
+		assert.Fail(t, "Failed to cast to HTTPEndPoint")
+	}
+
+	assert.Equal(t, host, httpEndPoint.GetHost())
+	assert.Equal(t, portNumber, httpEndPoint.GetPortNumber())
+	assert.Equal(t, path, httpEndPoint.GetPath())
 }
 
 func TestSet(t *testing.T) {
@@ -108,10 +125,17 @@ func TestSet(t *testing.T) {
 	newPortNumber := "9090"
 	newPath := "/newtest"
 	newEndpoint := httpadapter.NewEndpoint(newHost, newPortNumber, newPath)
-	adapter.SetEndPoint(ctx, *newEndpoint)
-	assert.Equal(t, newHost, adapter.GetEndPoint().GetHost())
-	assert.Equal(t, newPortNumber, adapter.GetEndPoint().GetPortNumber())
-	assert.Equal(t, newPath, adapter.GetEndPoint().GetPath())
+	adapter.SetEndPoint(ctx, newEndpoint)
+
+	httpEndPoint, ok := adapter.GetEndPoint().(*httpadapter.HTTPEndPoint)
+	if !ok {
+		// Test error, should not reach here
+		assert.Fail(t, "Failed to cast to HTTPEndPoint")
+	}
+
+	assert.Equal(t, newHost, httpEndPoint.GetHost())
+	assert.Equal(t, newPortNumber, httpEndPoint.GetPortNumber())
+	assert.Equal(t, newPath, httpEndPoint.GetPath())
 }
 
 func TestPublish_ErrorMakingHttpRequest(t *testing.T) {
@@ -127,7 +151,7 @@ func TestPublish_ErrorMakingHttpRequest(t *testing.T) {
 
 	// Force an error when making the HTTP request by providing an invalid URL
 	newEndpoint := httpadapter.NewEndpoint("://invalid-url", "8080", "/test")
-	adapter.SetEndPoint(ctx, *newEndpoint)
+	adapter.SetEndPoint(ctx, newEndpoint)
 
 	err := adapter.SendRequest(ctx, msg)
 	assert.Error(t, err)
@@ -146,7 +170,7 @@ func TestPublish_ErrorIncorrectPort(t *testing.T) {
 
 	// Force an error when making the HTTP request by providing an invalid URL
 	newEndpoint := httpadapter.NewEndpoint("http://localhost", "8080", "/test")
-	adapter.SetEndPoint(ctx, *newEndpoint)
+	adapter.SetEndPoint(ctx, newEndpoint)
 
 	err := adapter.SendRequest(ctx, msg)
 	assert.Error(t, err)
@@ -189,4 +213,15 @@ func TestPublish_ErrorSerializing(t *testing.T) {
 	err := adapter.SendRequest(ctx, msg)
 	assert.Error(t, err)
 	assert.Equal(t, "forced serialize error", err.Error())
+}
+
+func TestInterface(t *testing.T) {
+	ctx := initializeTelemetry()
+	host := "http://localhost"
+	portNumber := "8080"
+	path := "/test"
+
+	adapter, _ := httpadapter.Initializer(ctx, host, portNumber, path)
+
+	testInterfaceImplementation(t, adapter)
 }

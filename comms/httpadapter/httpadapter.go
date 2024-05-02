@@ -7,15 +7,10 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/perocha/goadapters/comms"
 	"github.com/perocha/goadapters/messaging"
 	"github.com/perocha/goutils/pkg/telemetry"
 )
-
-type CommsSystem interface {
-	SendRequest(ctx context.Context, data messaging.Message) error
-	SetEndPoint(ctx context.Context, endPoint EndPoint) error
-	GetEndPoint() *EndPoint
-}
 
 // HTTPAdapterImpl implements the MessagingSystem interface
 type HttpSendAdapter struct {
@@ -32,11 +27,11 @@ func Initializer(ctx context.Context, host string, portNumber string, path strin
 	httpClient := &http.Client{}
 
 	// Create a new HTTP endpoint
-	httpEndPoint := NewEndpoint(host, portNumber, path)
+	endpoint := NewEndpoint(host, portNumber, path)
 
 	return &HttpSendAdapter{
 		httpClient:   httpClient,
-		httpEndPoint: httpEndPoint,
+		httpEndPoint: endpoint,
 	}, nil
 }
 
@@ -83,16 +78,21 @@ func (a *HttpSendAdapter) SendRequest(ctx context.Context, data messaging.Messag
 }
 
 // Generic endpoint update method
-func (a *HttpSendAdapter) SetEndPoint(ctx context.Context, endPoint HTTPEndPoint) error {
+func (a *HttpSendAdapter) SetEndPoint(ctx context.Context, endPoint comms.EndPoint) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 	xTelemetry.Debug(ctx, "HTTPAdapter::SetEndPoint", telemetry.String("endPoint", endPoint.GetEndPoint()))
 
-	a.httpEndPoint = &endPoint
+	httpEndPoint, ok := endPoint.(*HTTPEndPoint)
+	if !ok {
+		return errors.New("endpoint is not of type HTTPEndPoint")
+	}
+
+	a.httpEndPoint = httpEndPoint
 
 	return nil
 }
 
 // Get endpoint object
-func (a *HttpSendAdapter) GetEndPoint() *HTTPEndPoint {
+func (a *HttpSendAdapter) GetEndPoint() comms.EndPoint {
 	return a.httpEndPoint
 }
