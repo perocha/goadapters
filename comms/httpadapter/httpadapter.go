@@ -11,6 +11,12 @@ import (
 	"github.com/perocha/goutils/pkg/telemetry"
 )
 
+type CommsSystem interface {
+	SendRequest(ctx context.Context, data messaging.Message) error
+	SetEndPoint(ctx context.Context, endPoint EndPoint) error
+	GetEndPoint() *EndPoint
+}
+
 // HTTPAdapterImpl implements the MessagingSystem interface
 type HttpSendAdapter struct {
 	httpClient   *http.Client

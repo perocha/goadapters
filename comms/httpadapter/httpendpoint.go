@@ -4,6 +4,12 @@ import (
 	"net/url"
 )
 
+// EndPoint interface
+type EndPoint interface {
+	GetEndPoint() string
+	SetEndPoint(endPoint string)
+}
+
 // HTTPEndPoint implements the EndPoint interface
 type HTTPEndPoint struct {
 	scheme     string
