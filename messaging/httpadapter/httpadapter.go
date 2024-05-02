@@ -106,7 +106,7 @@ func (a *HTTPAdapter) Subscribe(ctx context.Context) (<-chan messaging.Message, 
 	ctx, cancel := context.WithCancel(ctx)
 
 	// Construct the full endpoint URL
-	endpointURL := a.httpEndPoint.GetEndPoint()
+	endpointURL := a.httpEndPoint.GetEndPointURL() + ":" + a.httpEndPoint.GetPortNumber()
 
 	// Listen for incoming HTTP requests
 	http.HandleFunc(endpointURL, func(w http.ResponseWriter, r *http.Request) {
