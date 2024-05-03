@@ -9,15 +9,21 @@ import (
 	"github.com/perocha/goutils/pkg/telemetry"
 )
 
-func HTTPServerAdapterInit(ctx context.Context, portNumber string, path string) (*HttpAdapter, error) {
+func HTTPServerAdapterInit(ctx context.Context, endPoint comms.EndPoint) (*HttpAdapter, error) {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
-	xTelemetry.Debug(ctx, "HTTPAdapter::HTTPServerAdapterInit", telemetry.String("PortNumber", portNumber), telemetry.String("Path", path))
+
+	// Get the HTTP endpoint
+	httpEndPoint, ok := endPoint.(*HTTPEndPoint)
+	if !ok {
+		xTelemetry.Error(ctx, "HTTPAdapter::Start::Failed to cast to HTTPEndPoint")
+		err := errors.New("failed to cast to HTTPEndPoint")
+		return nil, err
+	}
+
+	xTelemetry.Debug(ctx, "HTTPAdapter::HTTPServerAdapterInit", telemetry.String("PortNumber", httpEndPoint.GetPortNumber()), telemetry.String("Path", httpEndPoint.GetPath()))
 
 	// Create a new server
-	httpServer := &http.Server{Addr: ":" + portNumber}
-
-	// Create a new HTTP endpoint
-	httpEndPoint := NewEndpoint("localhost", portNumber, path)
+	httpServer := &http.Server{Addr: ":" + httpEndPoint.GetPortNumber()}
 
 	return &HttpAdapter{
 		httpClient:   nil,
@@ -27,20 +33,19 @@ func HTTPServerAdapterInit(ctx context.Context, portNumber string, path string) 
 }
 
 // Start the HTTP server
-func (a *HttpAdapter) Start(ctx context.Context, endPoint comms.EndPoint) error {
+func (a *HttpAdapter) Start(ctx context.Context) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
-	xTelemetry.Debug(ctx, "HTTPAdapter::Start", telemetry.String("EndPoint", endPoint.GetEndPoint()))
+	xTelemetry.Debug(ctx, "HTTPAdapter::Start")
 
-	// Get the HTTP endpoint
-	httpEndPoint, ok := endPoint.(*HTTPEndPoint)
-	if !ok {
-		xTelemetry.Error(ctx, "HTTPAdapter::Start::Failed to cast to HTTPEndPoint")
-		err := errors.New("failed to cast to HTTPEndPoint")
+	// Validate if there's an endpoint set
+	if a.httpEndPoint == nil {
+		xTelemetry.Error(ctx, "HTTPAdapter::Start::No endpoint set")
+		err := errors.New("no endpoint set")
 		return err
 	}
 
 	// Register the endpoint
-	a.httpServer = &http.Server{Addr: ":" + httpEndPoint.GetPortNumber()}
+	a.httpServer = &http.Server{Addr: ":" + a.httpEndPoint.GetPortNumber()}
 
 	// Start the server
 	go func() {
@@ -54,7 +59,7 @@ func (a *HttpAdapter) Start(ctx context.Context, endPoint comms.EndPoint) error 
 }
 
 // Register a new endpoint
-func (a *HttpAdapter) RegisterEndPoint(ctx context.Context, endPoint comms.EndPoint, handler http.HandlerFunc) error {
+func (a *HttpAdapter) RegisterEndPoint(ctx context.Context, endPoint comms.EndPoint, handler comms.HandlerFunc) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 	xTelemetry.Debug(ctx, "HTTPAdapter::RegisterEndPoint", telemetry.String("EndPoint", endPoint.GetEndPoint()))
 
@@ -66,9 +71,45 @@ func (a *HttpAdapter) RegisterEndPoint(ctx context.Context, endPoint comms.EndPo
 		return err
 	}
 
-	// Register the endpoint
-	http.HandleFunc(httpEndPoint.GetPath(), handler)
+	// Register the endpoint with the adapter function
+	http.HandleFunc(httpEndPoint.GetPath(), func(w http.ResponseWriter, r *http.Request) {
+		// Convert http.ResponseWriter to comms.ResponseWriter
+		commsWriter := &responseWriterAdapter{w}
 
+		// Convert *http.Request to comms.Request
+		commsReq := &requestAdapter{r}
+
+		// Call the handler function
+		handler(commsWriter, commsReq)
+	})
+
+	return nil
+}
+
+// Adapter functions to convert http.ResponseWriter and *http.Request to comms.ResponseWriter and comms.Request respectively
+
+type responseWriterAdapter struct {
+	http.ResponseWriter
+}
+
+func (r *responseWriterAdapter) Write(data []byte) (int, error) {
+	return r.ResponseWriter.Write(data)
+}
+
+func (r *responseWriterAdapter) WriteHeader(statusCode int) {
+	r.ResponseWriter.WriteHeader(statusCode)
+}
+
+type requestAdapter struct {
+	*http.Request
+}
+
+func (r *requestAdapter) Header(key string) string {
+	return r.Request.Header.Get(key)
+}
+
+func (r *requestAdapter) Body() []byte {
+	// Implement your logic to read the request body if needed
 	return nil
 }
 
