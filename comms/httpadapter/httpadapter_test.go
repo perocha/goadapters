@@ -47,11 +47,11 @@ func TestInitializer(t *testing.T) {
 	portNumber := "8080"
 	path := "/test"
 
-	adapter, err := httpadapter.Initializer(ctx, host, portNumber, path)
+	adapter, err := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, adapter)
-	assert.IsType(t, &httpadapter.HttpSendAdapter{}, adapter)
+	assert.IsType(t, &httpadapter.HttpAdapter{}, adapter)
 
 	httpEndPoint, ok := adapter.GetEndPoint().(*httpadapter.HTTPEndPoint)
 	if !ok {
@@ -80,7 +80,7 @@ func TestPublish(t *testing.T) {
 	server.URL = host + ":" + portNumber + path
 
 	// Initialize the HTTP adapter
-	adapter, err := httpadapter.Initializer(ctx, host, portNumber, path)
+	adapter, err := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
 	assert.NoError(t, err)
 
 	// Build mock Message
@@ -96,7 +96,7 @@ func TestGet(t *testing.T) {
 	path := "/test"
 
 	// Initialize the HTTP adapter
-	adapter, err := httpadapter.Initializer(ctx, host, portNumber, path)
+	adapter, err := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
 	assert.NoError(t, err)
 
 	httpEndPoint, ok := adapter.GetEndPoint().(*httpadapter.HTTPEndPoint)
@@ -117,7 +117,7 @@ func TestSet(t *testing.T) {
 	path := "/test"
 
 	// Initialize the HTTP adapter
-	adapter, err := httpadapter.Initializer(ctx, host, portNumber, path)
+	adapter, err := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
 	assert.NoError(t, err)
 
 	// Set the endpoint URL and port number
@@ -144,7 +144,7 @@ func TestPublish_ErrorMakingHttpRequest(t *testing.T) {
 	portNumber := "8080"
 	path := "/test"
 
-	adapter, _ := httpadapter.Initializer(ctx, host, portNumber, path)
+	adapter, _ := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
 
 	// Create a message that will not cause an error when serialized
 	msg := messaging.NewMessage("1234", nil, "success", "test", []byte("test"))
@@ -163,7 +163,7 @@ func TestPublish_ErrorIncorrectPort(t *testing.T) {
 	portNumber := "8081"
 	path := "/test"
 
-	adapter, _ := httpadapter.Initializer(ctx, host, portNumber, path)
+	adapter, _ := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
 
 	// Create a message that will not cause an error when serialized
 	msg := messaging.NewMessage("1234", nil, "success", "test", []byte("test"))
@@ -187,7 +187,7 @@ func TestPublish_NonOKResponse(t *testing.T) {
 	host := "localhost"
 	portNumber := strings.Split(server.URL, ":")[2]
 	path := "/test"
-	adapter, _ := httpadapter.Initializer(ctx, host, portNumber, path)
+	adapter, _ := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
 
 	// Create a message that will not cause an error when serialized
 	msg := messaging.NewMessage("1234", nil, "success", "test", []byte("test"))
@@ -203,7 +203,7 @@ func TestPublish_ErrorSerializing(t *testing.T) {
 	portNumber := "8080"
 	path := "/test"
 
-	adapter, _ := httpadapter.Initializer(ctx, host, portNumber, path)
+	adapter, _ := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
 
 	// Create a mock message that will cause an error when serialized
 	msg := &MockMessage{
@@ -221,7 +221,7 @@ func TestInterface(t *testing.T) {
 	portNumber := "8080"
 	path := "/test"
 
-	adapter, _ := httpadapter.Initializer(ctx, host, portNumber, path)
+	adapter, _ := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
 
 	testInterfaceImplementation(t, adapter)
 }

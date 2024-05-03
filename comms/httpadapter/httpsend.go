@@ -12,14 +12,15 @@ import (
 	"github.com/perocha/goutils/pkg/telemetry"
 )
 
-// HTTPAdapterImpl implements the MessagingSystem interface
-type HttpSendAdapter struct {
+// HTTPAdapterImpl implements the comms interface
+type HttpAdapter struct {
 	httpClient   *http.Client
 	httpEndPoint *HTTPEndPoint
+	httpServer   *http.Server
 }
 
 // Initialize the HTTP adapter
-func Initializer(ctx context.Context, host string, portNumber string, path string) (*HttpSendAdapter, error) {
+func HttpSenderInit(ctx context.Context, host string, portNumber string, path string) (*HttpAdapter, error) {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 	xTelemetry.Debug(ctx, "HTTPAdapter::PublisherInitializer", telemetry.String("host", host), telemetry.String("PortNumber", portNumber), telemetry.String("Path", path))
 
@@ -29,14 +30,15 @@ func Initializer(ctx context.Context, host string, portNumber string, path strin
 	// Create a new HTTP endpoint
 	endpoint := NewEndpoint(host, portNumber, path)
 
-	return &HttpSendAdapter{
+	return &HttpAdapter{
 		httpClient:   httpClient,
 		httpEndPoint: endpoint,
+		httpServer:   nil,
 	}, nil
 }
 
 // Send a request
-func (a *HttpSendAdapter) SendRequest(ctx context.Context, data messaging.Message) error {
+func (a *HttpAdapter) SendRequest(ctx context.Context, data messaging.Message) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 	xTelemetry.Debug(ctx, "HTTPAdapter::Publish", telemetry.String("Command", data.GetCommand()), telemetry.String("Status", data.GetStatus()), telemetry.String("Data", string(data.GetData())))
 
@@ -78,7 +80,7 @@ func (a *HttpSendAdapter) SendRequest(ctx context.Context, data messaging.Messag
 }
 
 // Generic endpoint update method
-func (a *HttpSendAdapter) SetEndPoint(ctx context.Context, endPoint comms.EndPoint) error {
+func (a *HttpAdapter) SetEndPoint(ctx context.Context, endPoint comms.EndPoint) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 	xTelemetry.Debug(ctx, "HTTPAdapter::SetEndPoint", telemetry.String("endPoint", endPoint.GetEndPoint()))
 
@@ -93,6 +95,6 @@ func (a *HttpSendAdapter) SetEndPoint(ctx context.Context, endPoint comms.EndPoi
 }
 
 // Get endpoint object
-func (a *HttpSendAdapter) GetEndPoint() comms.EndPoint {
+func (a *HttpAdapter) GetEndPoint() comms.EndPoint {
 	return a.httpEndPoint
 }
