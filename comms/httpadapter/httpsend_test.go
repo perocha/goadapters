@@ -99,6 +99,7 @@ func TestGet(t *testing.T) {
 	adapter, err := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
 	assert.NoError(t, err)
 
+	// Get the endpoint URL and port number
 	httpEndPoint, ok := adapter.GetEndPoint().(*httpadapter.HTTPEndPoint)
 	if !ok {
 		// Test error, should not reach here
