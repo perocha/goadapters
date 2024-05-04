@@ -58,6 +58,21 @@ func (a *HttpAdapter) Start(ctx context.Context) error {
 	return nil
 }
 
+// Stop the HTTP server
+func (a *HttpAdapter) Stop(ctx context.Context) error {
+	xTelemetry := telemetry.GetXTelemetryClient(ctx)
+	xTelemetry.Debug(ctx, "HTTPAdapter::Stop")
+
+	// Shutdown the server
+	err := a.httpServer.Shutdown(ctx)
+	if err != nil {
+		xTelemetry.Error(ctx, "HTTPAdapter::Stop::Failed to shutdown HTTP server", telemetry.String("Error", err.Error()))
+		return err
+	}
+
+	return nil
+}
+
 // Register a new endpoint
 func (a *HttpAdapter) RegisterEndPoint(ctx context.Context, endPoint comms.EndPoint, handler comms.HandlerFunc) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
@@ -82,48 +97,6 @@ func (a *HttpAdapter) RegisterEndPoint(ctx context.Context, endPoint comms.EndPo
 		// Call the handler function
 		handler(commsWriter, commsReq)
 	})
-
-	return nil
-}
-
-// Adapter functions to convert http.ResponseWriter and *http.Request to comms.ResponseWriter and comms.Request respectively
-
-type responseWriterAdapter struct {
-	http.ResponseWriter
-}
-
-func (r *responseWriterAdapter) Write(data []byte) (int, error) {
-	return r.ResponseWriter.Write(data)
-}
-
-func (r *responseWriterAdapter) WriteHeader(statusCode int) {
-	r.ResponseWriter.WriteHeader(statusCode)
-}
-
-type requestAdapter struct {
-	*http.Request
-}
-
-func (r *requestAdapter) Header(key string) string {
-	return r.Request.Header.Get(key)
-}
-
-func (r *requestAdapter) Body() []byte {
-	// Implement your logic to read the request body if needed
-	return nil
-}
-
-// Stop the HTTP server
-func (a *HttpAdapter) Stop(ctx context.Context) error {
-	xTelemetry := telemetry.GetXTelemetryClient(ctx)
-	xTelemetry.Debug(ctx, "HTTPAdapter::Stop")
-
-	// Shutdown the server
-	err := a.httpServer.Shutdown(ctx)
-	if err != nil {
-		xTelemetry.Error(ctx, "HTTPAdapter::Stop::Failed to shutdown HTTP server", telemetry.String("Error", err.Error()))
-		return err
-	}
 
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/perocha/goadapters/comms"
 	"github.com/perocha/goadapters/comms/httpadapter"
 	"github.com/stretchr/testify/assert"
 )
@@ -11,11 +12,13 @@ import (
 func TestHTTPServerAdapterInit(t *testing.T) {
 	// Mock context and dependencies
 	ctx := initializeTelemetry()
+	host := "localhost"
 	portNumber := "8080"
 	path := "/test"
+	endpoint := httpadapter.NewEndpoint(host, portNumber, path)
 
 	// Initialize the HTTP adapter
-	adapter, err := httpadapter.HTTPServerAdapterInit(ctx, portNumber, path)
+	adapter, err := httpadapter.HTTPServerAdapterInit(ctx, endpoint)
 	assert.NoError(t, err)
 	assert.NotNil(t, adapter)
 
@@ -35,16 +38,18 @@ func TestHTTPServerAdapterInit(t *testing.T) {
 func TestHttpAdapter_StartAndStop(t *testing.T) {
 	// Mock context and dependencies
 	ctx := initializeTelemetry()
+	host := "localhost"
 	portNumber := "8080"
 	path := "/test"
+	endpoint := httpadapter.NewEndpoint(host, portNumber, path)
 
 	// Initialize the HTTP adapter
-	adapter, err := httpadapter.HTTPServerAdapterInit(ctx, portNumber, path)
+	adapter, err := httpadapter.HTTPServerAdapterInit(ctx, endpoint)
 	assert.NoError(t, err)
 	assert.NotNil(t, adapter)
 
 	// Start the HTTP adapter
-	err = adapter.Start(ctx, adapter.GetEndPoint())
+	err = adapter.Start(ctx)
 	assert.NoError(t, err)
 
 	// Create a test request to ensure the server is running
@@ -65,16 +70,18 @@ func TestHttpAdapter_StartAndStop(t *testing.T) {
 func TestHttpAdapter_RegisterEndPoint(t *testing.T) {
 	// Mock context and dependencies
 	ctx := initializeTelemetry()
+	host := "localhost"
 	portNumber := "8080"
 	path := "/test"
+	endpoint := httpadapter.NewEndpoint(host, portNumber, path)
 
 	// Initialize the HTTP adapter
-	adapter, err := httpadapter.HTTPServerAdapterInit(ctx, portNumber, path)
+	adapter, err := httpadapter.HTTPServerAdapterInit(ctx, endpoint)
 	assert.NoError(t, err)
 	assert.NotNil(t, adapter)
 
 	// Register a test handler function
-	testHandler := func(w http.ResponseWriter, r *http.Request) {
+	testHandler := func(w comms.ResponseWriter, r comms.Request) {
 		w.WriteHeader(http.StatusOK)
 	}
 

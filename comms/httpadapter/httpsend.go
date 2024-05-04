@@ -12,13 +12,6 @@ import (
 	"github.com/perocha/goutils/pkg/telemetry"
 )
 
-// HTTPAdapterImpl implements the comms interface
-type HttpAdapter struct {
-	httpClient   *http.Client
-	httpEndPoint *HTTPEndPoint
-	httpServer   *http.Server
-}
-
 // Initialize the HTTP adapter
 func HttpSenderInit(ctx context.Context, host string, portNumber string, path string) (*HttpAdapter, error) {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
