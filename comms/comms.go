@@ -6,10 +6,11 @@ import (
 	"github.com/perocha/goadapters/messaging"
 )
 
-type CommsSystem interface {
-	SendRequest(ctx context.Context, data messaging.Message) error
-	SetEndPoint(ctx context.Context, endPoint EndPoint) error
-	GetEndPoint() EndPoint
+type CommsSender interface {
+	SendRequest(ctx context.Context, endpoint EndPoint, data messaging.Message) error
+}
+
+type CommsReceiver interface {
 	Start(ctx context.Context) error
 	Stop(ctx context.Context) error
 	RegisterEndPoint(ctx context.Context, endPoint EndPoint, handler HandlerFunc) error

@@ -13,25 +13,20 @@ import (
 )
 
 // Initialize the HTTP adapter
-func HttpSenderInit(ctx context.Context, host string, portNumber string, path string) (*HttpAdapter, error) {
+func HttpSenderInit(ctx context.Context) (*HttpSender, error) {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
-	xTelemetry.Debug(ctx, "HTTPAdapter::PublisherInitializer", telemetry.String("host", host), telemetry.String("PortNumber", portNumber), telemetry.String("Path", path))
+	xTelemetry.Debug(ctx, "HTTPAdapter::HttpSenderInit")
 
 	// Create a new HTTP client
 	httpClient := &http.Client{}
 
-	// Create a new HTTP endpoint
-	endpoint := NewEndpoint(host, portNumber, path)
-
-	return &HttpAdapter{
-		httpClient:   httpClient,
-		httpEndPoint: endpoint,
-		httpServer:   nil,
+	return &HttpSender{
+		httpClient: httpClient,
 	}, nil
 }
 
 // Send a request
-func (a *HttpAdapter) SendRequest(ctx context.Context, data messaging.Message) error {
+func (a *HttpSender) SendRequest(ctx context.Context, endpoint comms.EndPoint, data messaging.Message) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 	xTelemetry.Debug(ctx, "HTTPAdapter::Publish", telemetry.String("Command", data.GetCommand()), telemetry.String("Status", data.GetStatus()), telemetry.String("Data", string(data.GetData())))
 
@@ -42,11 +37,14 @@ func (a *HttpAdapter) SendRequest(ctx context.Context, data messaging.Message) e
 		return err
 	}
 
-	// Construct the full endpoint URL
-	endpointURL := a.httpEndPoint.GetEndPoint()
+	// Get the endpoint URL
+	httpEndPoint, ok := endpoint.(*HTTPEndPoint)
+	if !ok {
+		return errors.New("endpoint is not of type HTTPEndPoint")
+	}
 
 	// Create a new HTTP request
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpointURL, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, httpEndPoint.GetEndPoint(), bytes.NewBuffer(jsonData))
 	if err != nil {
 		xTelemetry.Error(ctx, "HTTPAdapter::Publish::Failed to create HTTP request", telemetry.String("Error", err.Error()))
 		return err
@@ -70,24 +68,4 @@ func (a *HttpAdapter) SendRequest(ctx context.Context, data messaging.Message) e
 	}
 
 	return nil
-}
-
-// Generic endpoint update method
-func (a *HttpAdapter) SetEndPoint(ctx context.Context, endPoint comms.EndPoint) error {
-	xTelemetry := telemetry.GetXTelemetryClient(ctx)
-	xTelemetry.Debug(ctx, "HTTPAdapter::SetEndPoint", telemetry.String("endPoint", endPoint.GetEndPoint()))
-
-	httpEndPoint, ok := endPoint.(*HTTPEndPoint)
-	if !ok {
-		return errors.New("endpoint is not of type HTTPEndPoint")
-	}
-
-	a.httpEndPoint = httpEndPoint
-
-	return nil
-}
-
-// Get endpoint object
-func (a *HttpAdapter) GetEndPoint() comms.EndPoint {
-	return a.httpEndPoint
 }

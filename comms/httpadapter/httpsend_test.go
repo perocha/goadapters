@@ -37,31 +37,18 @@ func initializeTelemetry() context.Context {
 	return ctx
 }
 
-func testInterfaceImplementation(t *testing.T, adapter comms.CommsSystem) {
-	assert.Implements(t, (*comms.CommsSystem)(nil), adapter)
+func testInterfaceImplementation(t *testing.T, adapter comms.CommsSender) {
+	assert.Implements(t, (*comms.CommsSender)(nil), adapter)
 }
 
 func TestInitializer(t *testing.T) {
 	ctx := initializeTelemetry()
-	host := "http://localhost"
-	portNumber := "8080"
-	path := "/test"
 
-	adapter, err := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
+	adapter, err := httpadapter.HttpSenderInit(ctx)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, adapter)
-	assert.IsType(t, &httpadapter.HttpAdapter{}, adapter)
-
-	httpEndPoint, ok := adapter.GetEndPoint().(*httpadapter.HTTPEndPoint)
-	if !ok {
-		// Test error, should not reach here
-		assert.Fail(t, "Failed to cast to HTTPEndPoint")
-	}
-
-	assert.Equal(t, host, httpEndPoint.GetHost())
-	assert.Equal(t, portNumber, httpEndPoint.GetPortNumber())
-	assert.Equal(t, path, httpEndPoint.GetPath())
+	assert.IsType(t, &httpadapter.HttpSender{}, adapter)
 }
 
 func TestPublish(t *testing.T) {
@@ -75,105 +62,47 @@ func TestPublish(t *testing.T) {
 	host := "localhost"
 	portNumber := strings.Split(server.URL, ":")[2]
 	path := "/test"
+	endpoint := httpadapter.NewEndpoint(host, portNumber, path)
 
 	// Set the URL of the mock server
 	server.URL = host + ":" + portNumber + path
 
 	// Initialize the HTTP adapter
-	adapter, err := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
+	adapter, err := httpadapter.HttpSenderInit(ctx)
 	assert.NoError(t, err)
 
 	// Build mock Message
 	msg := messaging.NewMessage("1234", nil, "success", "test", []byte("test"))
-	err = adapter.SendRequest(ctx, msg)
+	err = adapter.SendRequest(ctx, endpoint, msg)
 	assert.NoError(t, err)
-}
-
-func TestGet(t *testing.T) {
-	ctx := initializeTelemetry()
-	host := "http://localhost"
-	portNumber := "8080"
-	path := "/test"
-
-	// Initialize the HTTP adapter
-	adapter, err := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
-	assert.NoError(t, err)
-
-	// Get the endpoint URL and port number
-	httpEndPoint, ok := adapter.GetEndPoint().(*httpadapter.HTTPEndPoint)
-	if !ok {
-		// Test error, should not reach here
-		assert.Fail(t, "Failed to cast to HTTPEndPoint")
-	}
-
-	assert.Equal(t, host, httpEndPoint.GetHost())
-	assert.Equal(t, portNumber, httpEndPoint.GetPortNumber())
-	assert.Equal(t, path, httpEndPoint.GetPath())
-}
-
-func TestSet(t *testing.T) {
-	ctx := initializeTelemetry()
-	host := "http://localhost"
-	portNumber := "8080"
-	path := "/test"
-
-	// Initialize the HTTP adapter
-	adapter, err := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
-	assert.NoError(t, err)
-
-	// Set the endpoint URL and port number
-	newHost := "http://newhost"
-	newPortNumber := "9090"
-	newPath := "/newtest"
-	newEndpoint := httpadapter.NewEndpoint(newHost, newPortNumber, newPath)
-	adapter.SetEndPoint(ctx, newEndpoint)
-
-	httpEndPoint, ok := adapter.GetEndPoint().(*httpadapter.HTTPEndPoint)
-	if !ok {
-		// Test error, should not reach here
-		assert.Fail(t, "Failed to cast to HTTPEndPoint")
-	}
-
-	assert.Equal(t, newHost, httpEndPoint.GetHost())
-	assert.Equal(t, newPortNumber, httpEndPoint.GetPortNumber())
-	assert.Equal(t, newPath, httpEndPoint.GetPath())
 }
 
 func TestPublish_ErrorMakingHttpRequest(t *testing.T) {
 	ctx := initializeTelemetry()
-	host := "http://localhost"
-	portNumber := "8080"
-	path := "/test"
 
-	adapter, _ := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
+	// Initialize the HTTP adapter
+	adapter, _ := httpadapter.HttpSenderInit(ctx)
 
 	// Create a message that will not cause an error when serialized
 	msg := messaging.NewMessage("1234", nil, "success", "test", []byte("test"))
 
 	// Force an error when making the HTTP request by providing an invalid URL
 	newEndpoint := httpadapter.NewEndpoint("://invalid-url", "8080", "/test")
-	adapter.SetEndPoint(ctx, newEndpoint)
-
-	err := adapter.SendRequest(ctx, msg)
+	err := adapter.SendRequest(ctx, newEndpoint, msg)
 	assert.Error(t, err)
 }
 
 func TestPublish_ErrorIncorrectPort(t *testing.T) {
 	ctx := initializeTelemetry()
-	host := "http://localhost"
-	portNumber := "8081"
-	path := "/test"
 
-	adapter, _ := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
+	adapter, _ := httpadapter.HttpSenderInit(ctx)
 
 	// Create a message that will not cause an error when serialized
 	msg := messaging.NewMessage("1234", nil, "success", "test", []byte("test"))
 
 	// Force an error when making the HTTP request by providing an invalid URL
 	newEndpoint := httpadapter.NewEndpoint("http://localhost", "8080", "/test")
-	adapter.SetEndPoint(ctx, newEndpoint)
-
-	err := adapter.SendRequest(ctx, msg)
+	err := adapter.SendRequest(ctx, newEndpoint, msg)
 	assert.Error(t, err)
 }
 
@@ -188,12 +117,13 @@ func TestPublish_NonOKResponse(t *testing.T) {
 	host := "localhost"
 	portNumber := strings.Split(server.URL, ":")[2]
 	path := "/test"
-	adapter, _ := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
+	endpoint := httpadapter.NewEndpoint(host, portNumber, path)
+	adapter, _ := httpadapter.HttpSenderInit(ctx)
 
 	// Create a message that will not cause an error when serialized
 	msg := messaging.NewMessage("1234", nil, "success", "test", []byte("test"))
 
-	err := adapter.SendRequest(ctx, msg)
+	err := adapter.SendRequest(ctx, endpoint, msg)
 	assert.Error(t, err)
 	assert.Equal(t, "server returned non-OK status code", err.Error())
 }
@@ -203,26 +133,24 @@ func TestPublish_ErrorSerializing(t *testing.T) {
 	host := "http://localhost"
 	portNumber := "8080"
 	path := "/test"
+	endpoint := httpadapter.NewEndpoint(host, portNumber, path)
 
-	adapter, _ := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
+	adapter, _ := httpadapter.HttpSenderInit(ctx)
 
 	// Create a mock message that will cause an error when serialized
 	msg := &MockMessage{
 		Message: messaging.NewMessage("1234", nil, "success", "test", []byte("test")),
 	}
 
-	err := adapter.SendRequest(ctx, msg)
+	err := adapter.SendRequest(ctx, endpoint, msg)
 	assert.Error(t, err)
 	assert.Equal(t, "forced serialize error", err.Error())
 }
 
 func TestInterface(t *testing.T) {
 	ctx := initializeTelemetry()
-	host := "http://localhost"
-	portNumber := "8080"
-	path := "/test"
 
-	adapter, _ := httpadapter.HttpSenderInit(ctx, host, portNumber, path)
+	adapter, _ := httpadapter.HttpSenderInit(ctx)
 
 	testInterfaceImplementation(t, adapter)
 }

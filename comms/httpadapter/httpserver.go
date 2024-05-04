@@ -9,43 +9,35 @@ import (
 	"github.com/perocha/goutils/pkg/telemetry"
 )
 
-func HTTPServerAdapterInit(ctx context.Context, endPoint comms.EndPoint) (*HttpAdapter, error) {
+func HTTPServerAdapterInit(ctx context.Context, port string) (*HttpReceiver, error) {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
-
-	// Get the HTTP endpoint
-	httpEndPoint, ok := endPoint.(*HTTPEndPoint)
-	if !ok {
-		xTelemetry.Error(ctx, "HTTPAdapter::Start::Failed to cast to HTTPEndPoint")
-		err := errors.New("failed to cast to HTTPEndPoint")
-		return nil, err
-	}
-
-	xTelemetry.Debug(ctx, "HTTPAdapter::HTTPServerAdapterInit", telemetry.String("PortNumber", httpEndPoint.GetPortNumber()), telemetry.String("Path", httpEndPoint.GetPath()))
+	xTelemetry.Debug(ctx, "HTTPAdapter::HTTPServerAdapterInit", telemetry.String("Port", port))
 
 	// Create a new server
-	httpServer := &http.Server{Addr: ":" + httpEndPoint.GetPortNumber()}
+	httpServer := &http.Server{Addr: ":" + port}
 
-	return &HttpAdapter{
-		httpClient:   nil,
-		httpEndPoint: httpEndPoint,
-		httpServer:   httpServer,
+	return &HttpReceiver{
+		httpServer: httpServer,
+		portNumber: port,
 	}, nil
 }
 
 // Start the HTTP server
-func (a *HttpAdapter) Start(ctx context.Context) error {
+func (a *HttpReceiver) Start(ctx context.Context) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 	xTelemetry.Debug(ctx, "HTTPAdapter::Start")
 
-	// Validate if there's an endpoint set
-	if a.httpEndPoint == nil {
-		xTelemetry.Error(ctx, "HTTPAdapter::Start::No endpoint set")
-		err := errors.New("no endpoint set")
+	// Validate server is not nil and port number is not empty
+	if a.httpServer == nil {
+		xTelemetry.Error(ctx, "HTTPAdapter::Start::HTTP server is nil")
+		err := errors.New("HTTP server is nil")
 		return err
 	}
-
-	// Register the endpoint
-	a.httpServer = &http.Server{Addr: ":" + a.httpEndPoint.GetPortNumber()}
+	if a.portNumber == "" {
+		xTelemetry.Error(ctx, "HTTPAdapter::Start::Port number is empty")
+		err := errors.New("port number is empty")
+		return err
+	}
 
 	// Start the server
 	go func() {
@@ -59,7 +51,7 @@ func (a *HttpAdapter) Start(ctx context.Context) error {
 }
 
 // Stop the HTTP server
-func (a *HttpAdapter) Stop(ctx context.Context) error {
+func (a *HttpReceiver) Stop(ctx context.Context) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 	xTelemetry.Debug(ctx, "HTTPAdapter::Stop")
 
@@ -74,7 +66,7 @@ func (a *HttpAdapter) Stop(ctx context.Context) error {
 }
 
 // Register a new endpoint
-func (a *HttpAdapter) RegisterEndPoint(ctx context.Context, endPoint comms.EndPoint, handler comms.HandlerFunc) error {
+func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endPoint comms.EndPoint, handler comms.HandlerFunc) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 	xTelemetry.Debug(ctx, "HTTPAdapter::RegisterEndPoint", telemetry.String("EndPoint", endPoint.GetEndPoint()))
 

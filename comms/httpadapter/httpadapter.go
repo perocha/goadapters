@@ -2,11 +2,15 @@ package httpadapter
 
 import "net/http"
 
-// HTTPAdapterImpl implements the comms interface
-type HttpAdapter struct {
-	httpClient   *http.Client
-	httpEndPoint *HTTPEndPoint
-	httpServer   *http.Server
+// HttpSender implements the sender part of comms interface
+type HttpSender struct {
+	httpClient *http.Client
+}
+
+// HttpReceiver implements the receiver part of comms interface
+type HttpReceiver struct {
+	httpServer *http.Server
+	portNumber string
 }
 
 // HTTPStatus represents custom HTTP status codes
