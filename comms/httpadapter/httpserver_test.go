@@ -43,10 +43,8 @@ func TestHttpAdapter_StartAndStop(t *testing.T) {
 func TestHttpAdapter_RegisterEndPoint(t *testing.T) {
 	// Mock context and dependencies
 	ctx := initializeTelemetry()
-	host := "localhost"
 	portNumber := "8080"
 	path := "/test"
-	endpoint := httpadapter.NewEndpoint(host, portNumber, path)
 
 	// Initialize the HTTP adapter
 	adapter, err := httpadapter.HTTPServerAdapterInit(ctx, portNumber)
@@ -59,7 +57,7 @@ func TestHttpAdapter_RegisterEndPoint(t *testing.T) {
 	}
 
 	// Register an endpoint
-	err = adapter.RegisterEndPoint(ctx, endpoint, testHandler)
+	err = adapter.RegisterEndPoint(ctx, path, testHandler)
 	assert.NoError(t, err)
 
 	// Start the HTTP adapter

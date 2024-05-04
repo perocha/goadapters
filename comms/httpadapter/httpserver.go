@@ -66,20 +66,12 @@ func (a *HttpReceiver) Stop(ctx context.Context) error {
 }
 
 // Register a new endpoint
-func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endPoint comms.EndPoint, handler comms.HandlerFunc) error {
+func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endpointPath string, handler comms.HandlerFunc) error {
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
-	xTelemetry.Debug(ctx, "HTTPAdapter::RegisterEndPoint", telemetry.String("EndPoint", endPoint.GetEndPoint()))
-
-	// Get the HTTP endpoint
-	httpEndPoint, ok := endPoint.(*HTTPEndPoint)
-	if !ok {
-		xTelemetry.Error(ctx, "HTTPAdapter::RegisterEndPoint::Failed to cast to HTTPEndPoint")
-		err := errors.New("failed to cast to HTTPEndPoint")
-		return err
-	}
+	xTelemetry.Debug(ctx, "HTTPAdapter::RegisterEndPoint", telemetry.String("endpointPath", endpointPath))
 
 	// Register the endpoint with the adapter function
-	http.HandleFunc(httpEndPoint.GetPath(), func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc(endpointPath, func(w http.ResponseWriter, r *http.Request) {
 		// Convert http.ResponseWriter to comms.ResponseWriter
 		commsWriter := &responseWriterAdapter{w}
 
