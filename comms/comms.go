@@ -13,7 +13,7 @@ type CommsSender interface {
 type CommsReceiver interface {
 	Start(ctx context.Context) error
 	Stop(ctx context.Context) error
-	RegisterEndPoint(ctx context.Context, endPoint EndPoint, handler HandlerFunc) error
+	RegisterEndPoint(ctx context.Context, endpointPath string, handler HandlerFunc) error
 }
 
 // HandlerFunc defines the interface for the handler function
