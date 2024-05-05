@@ -79,7 +79,7 @@ func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endpointPath string
 		commsReq := &requestAdapter{r}
 
 		// Call the handler function
-		handler(commsWriter, commsReq)
+		handler(ctx, commsWriter, commsReq)
 	})
 
 	return nil

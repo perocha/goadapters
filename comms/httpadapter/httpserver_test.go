@@ -1,6 +1,7 @@
 package httpadapter_test
 
 import (
+	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -52,7 +53,7 @@ func TestHttpAdapter_RegisterEndPoint(t *testing.T) {
 	assert.NotNil(t, adapter)
 
 	// Register a test handler function
-	testHandler := func(w comms.ResponseWriter, r comms.Request) {
+	testHandler := func(ctx context.Context, w comms.ResponseWriter, r comms.Request) {
 		w.WriteHeader(http.StatusOK)
 	}
 
