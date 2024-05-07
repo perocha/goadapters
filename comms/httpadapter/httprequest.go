@@ -7,10 +7,14 @@ type requestAdapter struct {
 }
 
 func (r *requestAdapter) Header(key string) string {
+	// Get the header value from the request
 	return r.Request.Header.Get(key)
 }
 
 func (r *requestAdapter) Body() []byte {
-	// Implement your logic to read the request body if needed
-	return nil
+	// Read the body
+	body := make([]byte, r.Request.ContentLength)
+	r.Request.Body.Read(body)
+
+	return body
 }
