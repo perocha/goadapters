@@ -13,6 +13,7 @@ type Message interface {
 	GetData() []byte
 	Deserialize(message []byte) error
 	Serialize() ([]byte, error)
+	SetOperationID(operationID string)
 }
 
 // MessageImpl implements the Message interface
@@ -27,6 +28,11 @@ type MessageImpl struct {
 // GetOperationID returns the operation ID
 func (m *MessageImpl) GetOperationID() string {
 	return m.OperationID
+}
+
+// SetOperationID sets the operation ID
+func (m *MessageImpl) SetOperationID(operationID string) {
+	m.OperationID = operationID
 }
 
 // GetError returns the error

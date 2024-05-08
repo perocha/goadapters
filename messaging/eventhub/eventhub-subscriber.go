@@ -84,7 +84,7 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 		xTelemetry.Debug(ctx, "EventHubAdapter::processEventsForPartition", telemetry.String("PartitionID", partitionClient.PartitionID()), telemetry.Int("Events", len(events)))
 
 		for _, eventItem := range events {
-			// Track the current time to log the telemetry and create a new operation uuid (add to the context)
+			// Track the current time to log the telemetry
 			startTime := time.Now()
 
 			// eventItem.Body is a byte slice and needs to be unmarshalled into a message

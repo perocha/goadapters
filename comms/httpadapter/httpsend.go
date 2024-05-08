@@ -6,7 +6,10 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/perocha/goadapters/comms"
 	"github.com/perocha/goadapters/messaging"
 	"github.com/perocha/goutils/pkg/telemetry"
@@ -27,6 +30,7 @@ func HttpSenderInit(ctx context.Context) (*HttpSender, error) {
 
 // Send a request
 func (a *HttpSender) SendRequest(ctx context.Context, endpoint comms.EndPoint, data messaging.Message) error {
+	startTime := time.Now()
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 	xTelemetry.Debug(ctx, "HTTPAdapter::Publish", telemetry.String("Command", data.GetCommand()), telemetry.String("Status", data.GetStatus()), telemetry.String("Data", string(data.GetData())))
 
@@ -66,6 +70,15 @@ func (a *HttpSender) SendRequest(ctx context.Context, endpoint comms.EndPoint, d
 		xTelemetry.Error(ctx, "HTTPAdapter::Publish::Server returned non-OK status code", telemetry.Int("StatusCode", resp.StatusCode), telemetry.String("Response", string(respBody)))
 		return errors.New("server returned non-OK status code")
 	}
+
+	// Create a new operation id (new uuid) and add it to the context
+	operationID := uuid.New().String()
+	ctx = context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, operationID)
+	data.SetOperationID(operationID)
+
+	// Log the telemetry request
+	duration := time.Since(startTime)
+	xTelemetry.Request(ctx, http.MethodPost, httpEndPoint.GetEndPoint(), duration, strconv.Itoa(http.StatusOK), true, httpEndPoint.GetHost(), "HTTPAdapter::Publish::Success")
 
 	return nil
 }
