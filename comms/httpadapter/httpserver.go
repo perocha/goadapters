@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/perocha/goadapters/comms"
 	"github.com/perocha/goutils/pkg/telemetry"
@@ -73,13 +75,35 @@ func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endpointPath string
 	// Register the endpoint with the adapter function
 	http.HandleFunc(endpointPath, func(w http.ResponseWriter, r *http.Request) {
 		// Convert http.ResponseWriter to comms.ResponseWriter
-		commsWriter := &responseWriterAdapter{w}
+		commsWriter := &responseWriterAdapter{
+			w,
+			http.StatusOK,
+		}
 
 		// Convert *http.Request to comms.Request
 		commsReq := &requestAdapter{r}
 
 		// Call the handler function
-		handler(ctx, commsWriter, commsReq)
+		//		handler(ctx, commsWriter, commsReq)
+		// Wrap the handler with telemetry logging
+		wrappedHandler := func(ctx context.Context, w comms.ResponseWriter, r comms.Request) {
+			startTime := time.Now()
+			// Call the original handler
+			handler(ctx, w, r)
+
+			// Log telemetry after calling the original handler
+			duration := time.Since(startTime)
+			hostname := r.Header("Host")
+			userAgent := r.Header("User-Agent")
+			statusCode := commsWriter.Status()
+			//			success := isSuccess(statusCode)            // You should define a function isSuccess to determine success based on status code
+			message := "Request processed successfully" // You may need to adjust this based on your logic
+			xTelemetry.Request(ctx, http.MethodPost, hostname, duration, strconv.Itoa(statusCode), true, userAgent, message, telemetry.String("Host", hostname), telemetry.String("User-Agent", userAgent))
+		}
+
+		// Call the wrapped handler
+		wrappedHandler(ctx, commsWriter, commsReq)
+
 	})
 
 	return nil
