@@ -95,10 +95,10 @@ func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endpointPath string
 			duration := time.Since(startTime)
 			hostname := r.Header("Host")
 			userAgent := r.Header("User-Agent")
-			statusCode := commsWriter.Status()
-			//			success := isSuccess(statusCode)            // You should define a function isSuccess to determine success based on status code
+			statusCode := w.Status()
+			success := isSuccess(statusCode)            // You should define a function isSuccess to determine success based on status code
 			message := "Request processed successfully" // You may need to adjust this based on your logic
-			xTelemetry.Request(ctx, http.MethodPost, hostname, duration, strconv.Itoa(statusCode), true, userAgent, message, telemetry.String("Host", hostname), telemetry.String("User-Agent", userAgent))
+			xTelemetry.Request(ctx, http.MethodPost, hostname, duration, strconv.Itoa(statusCode), success, userAgent, message, telemetry.String("Host", hostname), telemetry.String("User-Agent", userAgent))
 		}
 
 		// Call the wrapped handler
@@ -107,4 +107,19 @@ func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endpointPath string
 	})
 
 	return nil
+}
+
+func isSuccess(statusCode int) bool {
+	switch statusCode {
+	case http.StatusOK:
+		return true
+	case http.StatusCreated:
+		return true
+	case http.StatusAccepted:
+		return true
+	case http.StatusNoContent:
+		return true
+	default:
+		return false
+	}
 }

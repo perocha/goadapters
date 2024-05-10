@@ -23,6 +23,7 @@ type HandlerFunc func(context.Context, ResponseWriter, Request)
 type ResponseWriter interface {
 	Write([]byte) (int, error)
 	WriteHeader(statusCode int)
+	Status() int
 }
 
 // Request interface to abstract incoming requests
