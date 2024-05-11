@@ -3,6 +3,7 @@ package httpadapter
 import (
 	"context"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -101,6 +102,10 @@ func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endpointPath string
 			} else {
 				message = err.Error()
 			}
+
+			// Get operation id
+			operationID := telemetry.GetOperationID(ctx)
+			log.Printf("Operation ID: %s", operationID)
 
 			// Log telemetry after calling the original handler
 			duration := time.Since(startTime)
