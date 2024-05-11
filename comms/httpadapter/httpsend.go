@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/perocha/goadapters/comms"
 	"github.com/perocha/goadapters/messaging"
 	"github.com/perocha/goutils/pkg/telemetry"
@@ -35,8 +34,8 @@ func (a *HttpSender) SendRequest(ctx context.Context, endpoint comms.EndPoint, d
 	xTelemetry.Debug(ctx, "HTTPAdapter::Publish", telemetry.String("Command", data.GetCommand()), telemetry.String("Status", data.GetStatus()), telemetry.String("Data", string(data.GetData())))
 
 	// Create a new operation id (new uuid) and add it to the context
-	operationID := uuid.New().String()
-	ctx = context.WithValue(ctx, telemetry.OperationIDKeyContextKey, operationID)
+	//	operationID := uuid.New().String()
+	//	ctx = context.WithValue(ctx, telemetry.OperationIDKeyContextKey, operationID)
 	//	data.SetOperationID(operationID)
 
 	// Convert the message to JSON
