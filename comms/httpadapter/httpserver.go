@@ -104,8 +104,8 @@ func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endpointPath string
 			}
 
 			// Get operation id
-			operationID := telemetry.GetOperationID(ctx)
 			serviceName = telemetry.GetServiceName(ctx)
+			operationID := telemetry.GetOperationID(ctx)
 			log.Printf("Operation ID: %s", operationID)
 			log.Printf("Service Name: %s", serviceName)
 
