@@ -6,33 +6,20 @@ import (
 )
 
 type Message interface {
-	GetOperationID() string
 	GetError() error
 	GetStatus() string
 	GetCommand() string
 	GetData() []byte
 	Deserialize(message []byte) error
 	Serialize() ([]byte, error)
-	SetOperationID(operationID string)
 }
 
 // MessageImpl implements the Message interface
 type MessageImpl struct {
-	OperationID string `json:"operation_id"`
-	Error       error  `json:"error"`
-	Status      string `json:"status"`
-	Command     string `json:"command"`
-	Data        []byte `json:"data"`
-}
-
-// GetOperationID returns the operation ID
-func (m *MessageImpl) GetOperationID() string {
-	return m.OperationID
-}
-
-// SetOperationID sets the operation ID
-func (m *MessageImpl) SetOperationID(operationID string) {
-	m.OperationID = operationID
+	Error   error  `json:"error"`
+	Status  string `json:"status"`
+	Command string `json:"command"`
+	Data    []byte `json:"data"`
 }
 
 // GetError returns the error
@@ -78,13 +65,12 @@ func (m *MessageImpl) Serialize() ([]byte, error) {
 }
 
 // NewMessage creates a new message
-func NewMessage(operationID string, error error, status string, command string, data []byte) Message {
+func NewMessage(error error, status string, command string, data []byte) Message {
 	msg := &MessageImpl{
-		OperationID: operationID,
-		Error:       error,
-		Status:      status,
-		Command:     command,
-		Data:        data,
+		Error:   error,
+		Status:  status,
+		Command: command,
+		Data:    data,
 	}
 
 	return msg

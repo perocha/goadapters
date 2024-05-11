@@ -88,17 +88,17 @@ func (a *EventHubAdapterImpl) processEventsForPartition(ctx context.Context, par
 			startTime := time.Now()
 
 			// eventItem.Body is a byte slice and needs to be unmarshalled into a message
-			receivedMessage := messaging.NewMessage("", nil, "", "", nil)
+			receivedMessage := messaging.NewMessage(nil, "", "", nil)
 			err := receivedMessage.Deserialize(eventItem.Body)
 
 			if err != nil {
 				// Error unmarshalling the event body, send an error event to the event channel
 				xTelemetry.Error(ctx, "EventHubAdapter::processEventsForPartition::Error unmarshalling event body", telemetry.String("PartitionID", partitionClient.PartitionID()), telemetry.String("Error", err.Error()))
-				errorMessage := messaging.NewMessage("", err, "", "", nil)
+				errorMessage := messaging.NewMessage(err, "", "", nil)
 				eventChannel <- errorMessage
 			} else {
 				// If we reach this point, we have a message!! Get the operation ID from the message and add it to the context
-				ctx := context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, receivedMessage.GetOperationID())
+				//ctx := context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, receivedMessage.GetOperationID())
 				xTelemetry.Debug(ctx, "EventHubAdapter::processEventsForPartition::Message received", telemetry.String("PartitionID", partitionClient.PartitionID()))
 				eventChannel <- receivedMessage
 

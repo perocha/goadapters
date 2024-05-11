@@ -16,7 +16,7 @@ func (p *EventHubAdapterImpl) Publish(ctx context.Context, data messaging.Messag
 	xTelemetry := telemetry.GetXTelemetryClient(ctx)
 
 	// Add the operation ID to the context
-	ctx = context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, data.GetOperationID())
+	//ctx = context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, data.GetOperationID())
 	startTime := time.Now()
 
 	// Check if EventHub is initialized

@@ -53,8 +53,9 @@ func TestHttpAdapter_RegisterEndPoint(t *testing.T) {
 	assert.NotNil(t, adapter)
 
 	// Register a test handler function
-	testHandler := func(ctx context.Context, w comms.ResponseWriter, r comms.Request) {
+	testHandler := func(ctx context.Context, w comms.ResponseWriter, r comms.Request) error {
 		w.WriteHeader(http.StatusOK)
+		return nil
 	}
 
 	// Register an endpoint

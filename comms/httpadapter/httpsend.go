@@ -36,8 +36,8 @@ func (a *HttpSender) SendRequest(ctx context.Context, endpoint comms.EndPoint, d
 
 	// Create a new operation id (new uuid) and add it to the context
 	operationID := uuid.New().String()
-	ctx = context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, operationID)
-	data.SetOperationID(operationID)
+	ctx = context.WithValue(ctx, telemetry.OperationIDKeyContextKey, operationID)
+	//	data.SetOperationID(operationID)
 
 	// Convert the message to JSON
 	jsonData, err := data.Serialize()
