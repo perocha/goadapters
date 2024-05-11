@@ -3,7 +3,6 @@ package httpadapter
 import (
 	"context"
 	"errors"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -82,18 +81,18 @@ func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endpointPath string
 		}
 
 		// Convert *http.Request to comms.Request
-		commsReq := &requestAdapter{r}
+		commsReq := &requestAdapter{
+			r,
+		}
 
-		// Call the handler function
-		//		handler(ctx, commsWriter, commsReq)
-		// Wrap the handler with telemetry logging
+		// Call the handler function, wrapping the handler with telemetry logging
 		wrappedHandler := func(ctx context.Context, w comms.ResponseWriter, r comms.Request) {
 			// Get service name from context
 			serviceName := telemetry.GetServiceName(ctx)
 
 			startTime := time.Now()
 			// Call the original handler
-			err := handler(ctx, w, r)
+			newCtx, err := handler(ctx, w, r)
 
 			// Decide on the message based on the error
 			message := ""
@@ -103,18 +102,12 @@ func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endpointPath string
 				message = err.Error()
 			}
 
-			// Get operation id
-			serviceName = telemetry.GetServiceName(ctx)
-			operationID := telemetry.GetOperationID(ctx)
-			log.Printf("Operation ID: %s", operationID)
-			log.Printf("Service Name: %s", serviceName)
-
 			// Log telemetry after calling the original handler
 			duration := time.Since(startTime)
 			hostname := r.Header("Host")
 			statusCode := w.Status()
 			success := isSuccess(statusCode)
-			xTelemetry.Request(ctx, http.MethodPost, hostname, duration, strconv.Itoa(statusCode), success, serviceName, message)
+			xTelemetry.Request(newCtx, http.MethodPost, hostname, duration, strconv.Itoa(statusCode), success, serviceName, message)
 		}
 
 		// Call the wrapped handler

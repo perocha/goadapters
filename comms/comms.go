@@ -17,7 +17,7 @@ type CommsReceiver interface {
 }
 
 // HandlerFunc defines the interface for the handler function
-type HandlerFunc func(context.Context, ResponseWriter, Request) error
+type HandlerFunc func(context.Context, ResponseWriter, Request) (context.Context, error)
 
 // ResponseWriter interface to abstract response writing
 type ResponseWriter interface {
