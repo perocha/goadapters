@@ -88,7 +88,7 @@ func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endpointPath string
 		// Wrap the handler with telemetry logging
 		wrappedHandler := func(ctx context.Context, w comms.ResponseWriter, r comms.Request) {
 			// Get service name from context
-			serviceName := xTelemetry.GetContextInfo(ctx, telemetry.ServiceNameKey)
+			serviceName := telemetry.GetServiceName(ctx)
 
 			startTime := time.Now()
 			// Call the original handler
