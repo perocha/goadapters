@@ -9,7 +9,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.3.2
 	github.com/google/uuid v1.6.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/perocha/goutils v1.0.42
+	github.com/perocha/goutils v1.0.45
 	github.com/stretchr/testify v1.9.0
 )
 

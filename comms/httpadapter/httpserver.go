@@ -87,18 +87,27 @@ func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endpointPath string
 		//		handler(ctx, commsWriter, commsReq)
 		// Wrap the handler with telemetry logging
 		wrappedHandler := func(ctx context.Context, w comms.ResponseWriter, r comms.Request) {
+			// Get service name from context
+			serviceName := telemetry.GetServiceName(ctx)
+
 			startTime := time.Now()
 			// Call the original handler
-			handler(ctx, w, r)
+			err := handler(ctx, w, r)
+
+			// Decide on the message based on the error
+			message := ""
+			if err == nil {
+				message = "Request processed successfully"
+			} else {
+				message = err.Error()
+			}
 
 			// Log telemetry after calling the original handler
 			duration := time.Since(startTime)
 			hostname := r.Header("Host")
-			userAgent := r.Header("User-Agent")
 			statusCode := w.Status()
-			success := isSuccess(statusCode)            // You should define a function isSuccess to determine success based on status code
-			message := "Request processed successfully" // You may need to adjust this based on your logic
-			xTelemetry.Request(ctx, http.MethodPost, hostname, duration, strconv.Itoa(statusCode), success, userAgent, message, telemetry.String("Host", hostname), telemetry.String("User-Agent", userAgent))
+			success := isSuccess(statusCode)
+			xTelemetry.Request(ctx, http.MethodPost, hostname, duration, strconv.Itoa(statusCode), success, serviceName, message)
 		}
 
 		// Call the wrapped handler
@@ -109,6 +118,7 @@ func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endpointPath string
 	return nil
 }
 
+// Check if the status code is a success status code
 func isSuccess(statusCode int) bool {
 	switch statusCode {
 	case http.StatusOK:
