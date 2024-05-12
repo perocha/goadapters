@@ -13,11 +13,12 @@ import (
 
 // Publish an event to the EventHub
 func (p *EventHubAdapterImpl) Publish(ctx context.Context, data messaging.Message) error {
-	xTelemetry := telemetry.GetXTelemetryClient(ctx)
+	startTime := time.Now()
 
 	// Add the operation ID to the context
-	//ctx = context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, data.GetOperationID())
-	startTime := time.Now()
+	xTelemetry := telemetry.GetXTelemetryClient(ctx)
+	ctx = context.WithValue(context.Background(), telemetry.OperationIDKeyContextKey, data.GetOperationID())
+	xTelemetry.Debug(ctx, "EventHub::Publish", telemetry.String("Command", data.GetCommand()), telemetry.String("Status", data.GetStatus()), telemetry.String("Data", string(data.GetData())), telemetry.String("OperationID", data.GetOperationID()))
 
 	// Check if EventHub is initialized
 	if p == nil {
