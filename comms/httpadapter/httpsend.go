@@ -76,8 +76,8 @@ func (a *HttpSender) SendRequest(ctx context.Context, endpoint comms.EndPoint, d
 	}
 
 	// Log the telemetry request
-	duration := time.Since(startTime)
-	xTelemetry.Request(ctx, http.MethodPost, httpEndPoint.GetEndPoint(), duration, strconv.Itoa(http.StatusOK), true, httpEndPoint.GetHost(), "HTTPAdapter::Publish::Success")
+	//duration := time.Since(startTime)
+	xTelemetry.Request(ctx, http.MethodPost, httpEndPoint.GetEndPoint(), startTime, time.Now(), strconv.Itoa(http.StatusOK), true, httpEndPoint.GetHost(), "HTTPAdapter::Publish::Success")
 
 	return nil
 }

@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/perocha/goadapters/comms"
 	"github.com/perocha/goutils/pkg/telemetry"
 )
@@ -87,6 +88,10 @@ func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endpointPath string
 
 		// Call the handler function, wrapping the handler with telemetry logging
 		wrappedHandler := func(ctx context.Context, w comms.ResponseWriter, r comms.Request) {
+			// Generate a new OperationID and append to the context
+			operationID := uuid.New().String()
+			ctx = telemetry.SetOperationID(ctx, operationID)
+
 			// Get service name from context
 			serviceName := telemetry.GetServiceName(ctx)
 
@@ -103,11 +108,11 @@ func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endpointPath string
 			}
 
 			// Log telemetry after calling the original handler
-			duration := time.Since(startTime)
+			//duration := time.Since(startTime)
 			hostname := r.Header("Host")
 			statusCode := w.Status()
 			success := isSuccess(statusCode)
-			xTelemetry.Request(newCtx, http.MethodPost, hostname, duration, strconv.Itoa(statusCode), success, serviceName, message)
+			xTelemetry.Request(newCtx, http.MethodPost, hostname, startTime, time.Now(), strconv.Itoa(statusCode), success, serviceName, message)
 		}
 
 		// Call the wrapped handler
