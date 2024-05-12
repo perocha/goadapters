@@ -108,11 +108,9 @@ func (a *HttpReceiver) RegisterEndPoint(ctx context.Context, endpointPath string
 			}
 
 			// Log telemetry after calling the original handler
-			//duration := time.Since(startTime)
-			hostname := r.Header("Host")
 			statusCode := w.Status()
 			success := isSuccess(statusCode)
-			xTelemetry.Request(newCtx, http.MethodPost, hostname, startTime, time.Now(), strconv.Itoa(statusCode), success, serviceName, message)
+			xTelemetry.Request(newCtx, http.MethodPost, endpointPath, startTime, time.Now(), strconv.Itoa(statusCode), success, serviceName, message)
 		}
 
 		// Call the wrapped handler
