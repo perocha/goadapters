@@ -29,14 +29,20 @@ func HttpSenderInit(ctx context.Context) (*HttpSender, error) {
 
 // Send a request
 func (a *HttpSender) SendRequest(ctx context.Context, endpoint comms.EndPoint, data messaging.Message) error {
+	// Start tracking the time
 	startTime := time.Now()
-	xTelemetry := telemetry.GetXTelemetryClient(ctx)
-	xTelemetry.Debug(ctx, "HTTPAdapter::Publish", telemetry.String("Command", data.GetCommand()), telemetry.String("Status", data.GetStatus()), telemetry.String("Data", string(data.GetData())))
 
-	// Create a new operation id (new uuid) and add it to the context
-	//	operationID := uuid.New().String()
-	//	ctx = context.WithValue(ctx, telemetry.OperationIDKeyContextKey, operationID)
-	//	data.SetOperationID(operationID)
+	// Get telemetry client
+	xTelemetry := telemetry.GetXTelemetryClient(ctx)
+
+	// Obtain operation id from context
+	operationID := telemetry.GetOperationID(ctx)
+	xTelemetry.Debug(ctx, "HTTPAdapter::Publish", telemetry.String("Command", data.GetCommand()), telemetry.String("Status", data.GetStatus()), telemetry.String("Data", string(data.GetData())), telemetry.String("OperationID", operationID))
+
+	// Set operation ID in the message
+	if operationID != "" {
+		data.SetOperationID(operationID)
+	}
 
 	// Convert the message to JSON
 	jsonData, err := data.Serialize()

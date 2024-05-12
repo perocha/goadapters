@@ -72,7 +72,7 @@ func TestPublish(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Build mock Message
-	msg := messaging.NewMessage(nil, "success", "test", []byte("test"))
+	msg := messaging.NewMessage("", nil, "success", "test", []byte("test"))
 	err = adapter.SendRequest(ctx, endpoint, msg)
 	assert.NoError(t, err)
 }
@@ -84,7 +84,7 @@ func TestPublish_ErrorMakingHttpRequest(t *testing.T) {
 	adapter, _ := httpadapter.HttpSenderInit(ctx)
 
 	// Create a message that will not cause an error when serialized
-	msg := messaging.NewMessage(nil, "success", "test", []byte("test"))
+	msg := messaging.NewMessage("", nil, "success", "test", []byte("test"))
 
 	// Force an error when making the HTTP request by providing an invalid URL
 	newEndpoint := httpadapter.NewEndpoint("://invalid-url", "8080", "/test")
@@ -98,7 +98,7 @@ func TestPublish_ErrorIncorrectPort(t *testing.T) {
 	adapter, _ := httpadapter.HttpSenderInit(ctx)
 
 	// Create a message that will not cause an error when serialized
-	msg := messaging.NewMessage(nil, "success", "test", []byte("test"))
+	msg := messaging.NewMessage("", nil, "success", "test", []byte("test"))
 
 	// Force an error when making the HTTP request by providing an invalid URL
 	newEndpoint := httpadapter.NewEndpoint("http://localhost", "8080", "/test")
@@ -121,7 +121,7 @@ func TestPublish_NonOKResponse(t *testing.T) {
 	adapter, _ := httpadapter.HttpSenderInit(ctx)
 
 	// Create a message that will not cause an error when serialized
-	msg := messaging.NewMessage(nil, "success", "test", []byte("test"))
+	msg := messaging.NewMessage("", nil, "success", "test", []byte("test"))
 
 	err := adapter.SendRequest(ctx, endpoint, msg)
 	assert.Error(t, err)
@@ -139,7 +139,7 @@ func TestPublish_ErrorSerializing(t *testing.T) {
 
 	// Create a mock message that will cause an error when serialized
 	msg := &MockMessage{
-		Message: messaging.NewMessage(nil, "success", "test", []byte("test")),
+		Message: messaging.NewMessage("", nil, "success", "test", []byte("test")),
 	}
 
 	err := adapter.SendRequest(ctx, endpoint, msg)
